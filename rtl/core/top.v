@@ -1,0 +1,113 @@
+// 
+// Copyright 2013 Jeff Bush
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// 
+
+module top(
+	input 				clk,
+	input				reset,
+	output reg[15:0] 	output_val,
+	output reg			output_enable);
+	
+	wire[2:0] device_core_id;
+	wire device_write_en;
+	wire device_read_en;
+	wire[9:0] device_addr;
+	wire[15:0] device_data_out;
+	reg[15:0] device_data_in;
+
+	cluster cluster(
+		.clk(clk),
+		.reset(reset),
+		.device_core_id(device_core_id),
+		.device_write_en(device_write_en),
+		.device_read_en(device_read_en),
+		.device_addr(device_addr),
+		.device_data_out(device_data_out),
+		.device_data_in(device_data_in));
+
+	reg[2:0] sem_holder0;
+	reg sem_held0;
+	reg[2:0] sem_holder1;
+	reg sem_held1;
+
+	always @(posedge clk, posedge reset)
+	begin
+		if (reset)
+		begin
+			device_data_in <= 0;
+			sem_holder0 <= 0;
+			sem_held0 <= 0;
+			sem_holder1 <= 0;
+			sem_held1 <= 0;
+			output_val <= 0;
+			output_enable <= 0;
+		end
+		else
+		begin
+			// Output
+			if (device_addr == 'h3ff && device_write_en)
+			begin
+				output_val <= device_data_out;
+				output_enable <= 1;
+			end
+			else
+				output_enable <= 0;
+		
+			case (device_addr)
+				// Mutex 0
+				'h3fe: 
+				begin
+					if (device_write_en)
+					begin
+						if (device_data_out == 0 && sem_holder0 == device_core_id)
+							sem_held0 <= 0;	// Release mutex
+						else if (device_data_out && !sem_held0)
+						begin
+							// Acquire mutex
+							sem_held0 <= 1;
+							sem_holder0 <= device_core_id;
+						end
+					end
+					else
+					begin
+						// Check if mutex is held
+						device_data_in <= sem_held0 && sem_holder0 == device_core_id;
+					end
+				end
+
+				// Mutex 1
+				'h3fd: 
+				begin
+					if (device_write_en)
+					begin
+						if (device_data_out == 0 && sem_holder1 == device_core_id)
+							sem_held1 <= 0;	// Release mutex
+						else if (device_data_out && !sem_held1)
+						begin
+							// Acquire mutex
+							sem_held1 <= 1;
+							sem_holder1 <= device_core_id;
+						end
+					end
+					else
+					begin
+						// Check if mutex is held
+						device_data_in <= sem_held1 && sem_holder1 == device_core_id;
+					end
+				end
+			endcase
+		end
+	end
+endmodule

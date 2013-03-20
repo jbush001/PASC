@@ -17,7 +17,6 @@
 module multi_tb;
 
 	reg clk = 0;
-	reg reset = 0;
 	wire[15:0] value_out;
 	wire has_output_value;
 	reg[1000:0] filename;
@@ -26,7 +25,6 @@ module multi_tb;
 
 	top top(
 		.clk(clk),
-		.reset(reset),
 		.output_val(output_val),
 		.output_enable(output_enable));
 
@@ -54,8 +52,6 @@ module multi_tb;
 		$dumpfile("trace.lxt");
 		$dumpvars;
 
-		#5 reset = 1;
-		#5 reset = 0;
 		for (i = 0; i < 2000; i = i + 1)
 		begin
 			#5 clk = 0;

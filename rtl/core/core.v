@@ -41,7 +41,8 @@ module core
 	wire device_memory_access;
 	wire[15:0] data_to_pipeline;
 	wire stall_pipeline;
-
+	wire local_memory_write;
+	
 	assign local_memory_select = daddr[15:LMEM_ADDR_WIDTH] == 0;
 	assign remote_wren = !local_memory_select && dwrite_en;
 	assign remote_rden = !local_memory_select && dread_en;

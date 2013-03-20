@@ -16,10 +16,10 @@
 
 module top(
 	input 				clk,
-	input				reset,
 	output reg[15:0] 	output_val,
 	output reg			output_enable);
 	
+	reg reset;
 	wire[2:0] device_core_id;
 	wire device_write_en;
 	wire device_read_en;
@@ -41,6 +41,21 @@ module top(
 	reg sem_held0;
 	reg[2:0] sem_holder1;
 	reg sem_held1;
+	reg[7:0] reset_count;
+
+	initial
+	begin
+		reset = 1;	// FPGA initialization
+		reset_count = 0;
+	end
+
+	always @(posedge clk)
+	begin
+		// Release reset
+		reset_count <= { reset_count[6:0], 1'b1 };
+		if (reset_count == 8'b11111111)
+			reset <= 0;
+	end
 
 	always @(posedge clk, posedge reset)
 	begin

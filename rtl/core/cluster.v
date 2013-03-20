@@ -17,7 +17,7 @@
 module cluster(
 	input 			clk,
 	input			reset,
-	output[2:0]		device_core_id,
+	output reg[2:0]	device_core_id,
 	output			device_write_en,
 	output			device_read_en,
 	output[9:0]		device_addr,
@@ -25,7 +25,7 @@ module cluster(
 	input[15:0]		device_data_in);
 
 	localparam NUM_CORES = 8;
-	localparam LOCAL_MEMORY_SIZE = 2048;
+	localparam LOCAL_MEMORY_SIZE = 512;
 
 	reg[15:0] remote_addr;
 	wire[15:0] remote_read_val;
@@ -67,7 +67,7 @@ module cluster(
 	wire[15:0] global_mem_q;
 	wire device_memory_select;
 	reg device_memory_select_l;
-	reg[2:0] device_core_id;
+	wire gmem_write;
 
 	reg[NUM_CORES-1:0] core_enable;
 
@@ -154,23 +154,24 @@ module cluster(
 	// Request mux
 	always @*
 	begin
-		casez (core_enable)
-			8'bzzzzzzz1: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren0, remote_rden0, remote_addr0, remote_write_val0, 3'd0 };
-			8'bzzzzzz1z: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren1, remote_rden1, remote_addr1, remote_write_val1, 3'd1 };
-			8'bzzzzz1zz: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren2, remote_rden2, remote_addr2, remote_write_val2, 3'd2 };
-			8'bzzzz1zzz: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren3, remote_rden3, remote_addr3, remote_write_val3, 3'd3 };
-			8'bzzz1zzzz: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren4, remote_rden4, remote_addr4, remote_write_val4, 3'd4 };
-			8'bzz1zzzzz: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren5, remote_rden5, remote_addr5, remote_write_val5, 3'd5 };
-			8'bz1zzzzzz: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren6, remote_rden6, remote_addr6, remote_write_val6, 3'd6 };
-			8'b1zzzzzzz: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
+		case (core_enable)
+			8'b10000000: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
 				= { remote_wren7, remote_rden7, remote_addr7, remote_write_val7, 3'd7 };
+			8'b01000000: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
+				= { remote_wren6, remote_rden6, remote_addr6, remote_write_val6, 3'd6 };
+			8'b00100000: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
+				= { remote_wren5, remote_rden5, remote_addr5, remote_write_val5, 3'd5 };
+			8'b00010000: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
+				= { remote_wren4, remote_rden4, remote_addr4, remote_write_val4, 3'd4 };
+			8'b00001000: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
+				= { remote_wren3, remote_rden3, remote_addr3, remote_write_val3, 3'd3 };
+			8'b00000100: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
+				= { remote_wren2, remote_rden2, remote_addr2, remote_write_val2, 3'd2 };
+			8'b00000010: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
+				= { remote_wren1, remote_rden1, remote_addr1, remote_write_val1, 3'd1 };
+			default: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
+				= { remote_wren0, remote_rden0, remote_addr0, remote_write_val0, 3'd0 };
+
 		endcase
 	end
 
@@ -179,9 +180,10 @@ module cluster(
 	assign gmem_write = !device_memory_select && remote_wren;
 	assign remote_read_val = device_memory_select_l ? device_data_in : global_mem_q;
 	assign device_write_en = device_memory_select && remote_wren; 
+	assign device_read_en = device_memory_select && remote_rden;
 	assign device_data_out = remote_write_val;
 
-	localparam GMEM_SIZE = 4096;
+	localparam GMEM_SIZE = 1024;
 	localparam GMEM_ADDR_WIDTH = $clog2(GMEM_SIZE);
 
 	spsram #(GMEM_SIZE, 16, GMEM_ADDR_WIDTH) global_memory(

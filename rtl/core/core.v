@@ -43,7 +43,7 @@ module core
 	wire stall_pipeline;
 	wire local_memory_write;
 	
-	assign local_memory_select = daddr[15:LMEM_ADDR_WIDTH] == 0;
+	assign local_memory_select = daddr[15:14] == 2'b00;	// Bottom 16k words
 	assign remote_wren = !local_memory_select && dwrite_en;
 	assign remote_rden = !local_memory_select && dread_en;
 	assign remote_addr = daddr;

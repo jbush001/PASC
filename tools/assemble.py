@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # 
 # Copyright 2013 Jeff Bush
 # 
@@ -33,12 +34,20 @@ class CodeBuilder:
 		self.fixups = []
 		self.code = []
 		self.labels = {}
+		self.currentPc = 0
+
+	def setOrigin(self, where):
+		if where < self.currentPc:
+			raise AssembleError('overlapping origin')
+			
+		self.currentPc = where
+
+	def _emit(self, type, instr):
+		self.emitData((type << 13) | instr)
 
 	def emitData(self, value):
 		self.code += [ value ]
-
-	def _emit(self, type, instr):
-		self.code += [ ((type << 13) | instr) ]
+		self.currentPc += 1
 
 	def emitArith(self, operation, dest, opa, opb):
 		self._emit(0, (operation << 9) | (opb << 6) | (opa << 3) | dest)
@@ -65,11 +74,11 @@ class CodeBuilder:
 		self._emit(3, ((value & 0x7f) << 6) | (opa << 3) | dest)
 
 	def emitUnconditionalBranch(self, lineno, target, link):
-		self.fixups += [ ( self.FIXUP_UNCONDITIONAL, self.getPc(), target, lineno ) ]
+		self.fixups += [ ( self.FIXUP_UNCONDITIONAL, len(self.code), self.getPc(), target, lineno ) ]
 		self._emit(6, (link << 12))
 
 	def emitConditionalBranch(self, lineno, target, condition):
-		self.fixups += [ ( self.FIXUP_CONDITIONAL, self.getPc(), target, lineno ) ]
+		self.fixups += [ ( self.FIXUP_CONDITIONAL, len(self.code), self.getPc(), target, lineno ) ]
 		self._emit(5, (condition << 10))
 		
 	def emitLabel(self, label):
@@ -79,43 +88,43 @@ class CodeBuilder:
 		self.labels[label] = self.getPc()
 
 	def emitLea(self, lineno, reg, target):
-		self.fixups += [ ( self.FIXUP_DATA_REF, self.getPc(), target, lineno ) ]
+		self.fixups += [ ( self.FIXUP_DATA_REF, len(self.code), self.getPc(), target, lineno ) ]
 		self.emitLui(reg, 0)
 		self.emitAddi(reg, reg, 0)
 
 	def getPc(self):
-		return len(self.code)
+		return self.currentPc
 
 	def doFixups(self):
-		for type, addr, label, lineno in self.fixups:
+		for type, codeOffset, address, label, lineno in self.fixups:
 			if label not in self.labels:
 				raise AssembleError('unknown label ' + label, lineno)
 		
 			targetAddress = self.labels[label]
-			offset = targetAddress - addr - 1
+			offset = targetAddress - address - 1
 			if type == self.FIXUP_DATA_REF:
 				# LUI followed by ADDI
-				self.code[addr] |= (((targetAddress >> 6) & 0x3ff) << 3) 
-				self.code[addr + 1] |= ((targetAddress & 0x3f) << 6)
+				self.code[codeOffset] |= (((targetAddress >> 6) & 0x3ff) << 3) 
+				self.code[codeOffset + 1] |= ((targetAddress & 0x3f) << 6)
 			elif type == self.FIXUP_UNCONDITIONAL:
 				if offset > 0x7fff or offset < -0x7fff:
 					raise AssembleError('fixup out of range', lineno)
 					
-				self.code[addr] = (self.code[addr] & ~0xfff) | (offset & 0xfff)
+				self.code[codeOffset] = (self.code[codeOffset] & ~0xfff) | (offset & 0xfff)
 			else:
 				assert type == self.FIXUP_CONDITIONAL
 				if offset > 0x1ff or offset < -0x1ff:
 					raise AssembleError('fixup out of range', lineno)
 
-				self.code[addr] = (self.code[addr] & ~0x3ff) | (offset & 0x3ff)
+				self.code[codeOffset] = (self.code[codeOffset] & ~0x3ff) | (offset & 0x3ff)
 
-	def dumpHex(self):
+	def dumpHex(self, outputStream):
 		for x in self.code:
-			print '%04x' % x
+			outputStream.write('%04x\n' % x)
 
 class Parser:
-	def __init__(self):
-		self.lexer = shlex.shlex(sys.stdin)
+	def __init__(self, stream):
+		self.lexer = shlex.shlex(stream)
 		self.lexer.commenters = '#'
 		self.lexer.wordchars += '_:-'
 		self.builder = None
@@ -140,6 +149,14 @@ class Parser:
 			raise AssembleError('bad register index')
 			
 		return id
+
+	def _parseNumber(self):
+		tok = self.lexer.get_token()
+		if len(tok) >= 2 and tok[:2] == '0x':
+			# Hex
+			return int(tok[2:], 16)
+		else:
+			return int(tok)	# Decimal
 
 	FORM_THREE_REG = 0
 	FORM_TWO_REG = 1
@@ -202,12 +219,16 @@ class Parser:
 			elif token == 'res':
 				# Reserve data words
 				while True:
-					value = int(self.lexer.get_token())
+					value = self._parseNumber()
 					self.builder.emitData(value)
 					lookahead = self.lexer.get_token()
 					if lookahead != ',':
 						self.lexer.push_token(lookahead)
 						break
+			elif token == 'org':
+				address = self._parseNumber()
+				self.builder.setOrigin(address)
+				
 			elif token in self.INSTRUCTIONS:
 				form, param = self.INSTRUCTIONS[token]
 				if form == self.FORM_THREE_REG:
@@ -234,7 +255,8 @@ class Parser:
 						if not lookahead.isdigit():
 							raise AssembleError('unexpected token')
 
-						offset = int(lookahead)
+						self.lexer.push_token(lookahead)
+						offset = self._parseNumber()
 						self._match('(')
 					else:
 						offset = 0
@@ -251,7 +273,7 @@ class Parser:
 					self._match(',')
 					opa = self._parseRegister()
 					self._match(',')
-					val = int(self.lexer.get_token())
+					val = self._parseNumber()
 					self.builder.emitAddi(dest, opa, val)
 				elif form == self.FORM_LUI:
 					# opcode reg, immediate
@@ -275,7 +297,7 @@ class Parser:
 					# pseudo op load immediate.  Build this out of LUI and/ADDI
 					dest = self._parseRegister()
 					self._match(',')
-					value = int(self.lexer.get_token())
+					value = self._parseNumber()
 					if value > 0x7fff or value < -0x7fff:
 						raise AssembleError('constant out of range')
 
@@ -299,10 +321,21 @@ class Parser:
 
 		return True
 
+if len(sys.argv) != 3:
+	print 'Usage: assemble <output file> <input file>'
+	sys.exit(1)
+
+outputFile = open(sys.argv[1], 'w')
+inputFile = open(sys.argv[2], 'r')
+
 builder = CodeBuilder()
-parser = Parser()
+parser = Parser(inputFile)
 parser.parseSource(builder)
 builder.doFixups()
-builder.dumpHex()
+builder.dumpHex(outputFile)
+
+outputFile.close()
+inputFile.close()
+
 
 

@@ -1,0 +1,31 @@
+Required to run:
+- Python 2.7
+- Icarus Verilog (for simulation)
+- Altera Quartus (for FPGA)
+
+To run in simulation:
+
+1. Assemble a program (in the test directory). Replace 'sourcefile' with the file you'd like to run.
+
+tools/assemble.py tests/sourcefile.hex tests/sourcefile.asm
+
+(First parameter is the output file and second is the source.  Be careful not to swap :)
+
+2. Build the verilog models
+
+cd rtl
+make multi-sim.vvp
+
+3. Run a verilog model
+
+vvp multi-sim.vvp +bin=../tests/sourcefile.hex
+
+Any value written to address 0xFFFF will be displayed on the console.  A trace file will be dumped into 'trace.lxt', which can be read with GTKWave or the like.
+
+To run on FPGA:
+
+1. You'll need to initialize the contents of each local memory currently by uncommenting the $readmemh call into the initial clause of dpsram.  Put the appropriate compiled program as 'program.hex' in the fpga/cIIstarter directory.
+
+2. Synthesize design by opening 'fpga/cIIstarter/cIIstarter.qpf' and hitting 'compile'.  Note that the design needs to be compiled each time the program is changed.
+
+

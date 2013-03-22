@@ -14,28 +14,14 @@
 # limitations under the License.
 # 
 
-COMMON_FILES=core/dpsram.v \
+SOURCES=core/dpsram.v \
 	core/pipeline.v	\
-	core/core.v 
-
-SINGLE_FILES=$(COMMON_FILES) \
-	testbench/single_tb.v
-
-MULTI_FILES =$(COMMON_FILES) \
+	core/core.v \
 	core/cluster.v \
 	core/spsram.v \
 	core/top.v \
 	testbench/multi_tb.v 
 
-single-sim.vvp: $(SINGLE_FILES)
-	iverilog -o $@ $(SINGLE_FILES)
-
-multi-sim.vvp: $(MULTI_FILES)
-	iverilog -o $@ $(MULTI_FILES)
-
-runsingle: single-sim.vvp
-	vvp single-sim.vvp +bin=../tests/bubble-sort.hex -lxt2
-
-runmulti: multi-sim.vvp
-	vvp multi-sim.vvp +bin=../tests/synchronize.hex -lxt2
+multi-sim.vvp: $(SOURCES)
+	iverilog -o $@ $(SOURCES)
 

@@ -14,7 +14,7 @@ tools/assemble.py tests/sourcefile.hex tests/sourcefile.asm
 2. Build the verilog model:
 
 cd rtl
-make multi-sim.vvp
+make
 
 3. Run a verilog model (making the +bin parameter point to the program you want to run).
 

@@ -24,7 +24,7 @@ Any value written to address 0xFFFF will be displayed on the console.  A trace f
 
 To run on FPGA:
 
-1. You'll need to initialize the contents of each local memory currently by uncommenting the $readmemh call into the initial clause of dpsram.v.  Put the appropriate compiled program as 'program.hex' in the fpga/cIIstarter directory.
+1. You'll need to initialize the contents of each local memory currently by uncommenting the $readmemh call into the initial clause of dpsram.v.  Put the appropriate assembly output as 'program.hex' in the fpga/cIIstarter directory.
 
 2. Synthesize design by opening 'fpga/cIIstarter/cIIstarter.qpf'.  Note that the design needs to be resynthesized each time the program is changed.
 

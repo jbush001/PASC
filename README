@@ -5,18 +5,18 @@ Required to run:
 
 To run in simulation:
 
-1. Assemble a program (in the test directory). Replace 'sourcefile' with the file you'd like to run.
+1. Assemble a program (in the test directory), with 'sourcefile' in the command line below being the file to be run:
 
 tools/assemble.py tests/sourcefile.hex tests/sourcefile.asm
 
-(First parameter is the output file and second is the source.  Be careful not to swap :)
+(First parameter is the output file and second is the source.  Be careful not to swap or you'll need to write the program again :)
 
-2. Build the verilog models
+2. Build the verilog model:
 
 cd rtl
 make multi-sim.vvp
 
-3. Run a verilog model
+3. Run a verilog model (making the +bin parameter point to the program you want to run).
 
 vvp multi-sim.vvp +bin=../tests/sourcefile.hex
 
@@ -24,8 +24,10 @@ Any value written to address 0xFFFF will be displayed on the console.  A trace f
 
 To run on FPGA:
 
-1. You'll need to initialize the contents of each local memory currently by uncommenting the $readmemh call into the initial clause of dpsram.  Put the appropriate compiled program as 'program.hex' in the fpga/cIIstarter directory.
+1. You'll need to initialize the contents of each local memory currently by uncommenting the $readmemh call into the initial clause of dpsram.v.  Put the appropriate compiled program as 'program.hex' in the fpga/cIIstarter directory.
 
-2. Synthesize design by opening 'fpga/cIIstarter/cIIstarter.qpf' and hitting 'compile'.  Note that the design needs to be compiled each time the program is changed.
+2. Synthesize design by opening 'fpga/cIIstarter/cIIstarter.qpf'.  Note that the design needs to be resynthesized each time the program is changed.
+
+
 
 

@@ -32,15 +32,15 @@ module spsram
 	reg[DATA_WIDTH - 1:0] data[0:SIZE - 1];
 	integer i;
 	
-	// synthesis translate_off
 	initial
 	begin
 		for (i = 0; i < SIZE; i = i + 1)
 			data[i] = 0;
 
 		q_a = 0;
+
+//		$readmemh("program.hex", data);
 	end
-	// synthesis translate_on
 
 	// Port A
 	always @(posedge clk)

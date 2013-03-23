@@ -23,6 +23,9 @@
 # r4 - temporary
 # r5 - set if another loop is necessary
 #
+			
+				res 64				# Size for bootloader to copy
+				org 16
 
 sort_loop:		lea r0, data_array
 				load r1, (r0)		# Load element count

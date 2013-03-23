@@ -22,6 +22,9 @@ SOURCES=core/dpsram.v \
 	core/top.v \
 	testbench/multi_tb.v 
 
-multi-sim.vvp: $(SOURCES)
+multi-sim.vvp: $(SOURCES) core/coreboot.hex
 	iverilog -o $@ $(SOURCES)
+	
+core/coreboot.hex: core/coreboot.asm
+	../tools/assemble.py core/coreboot.hex core/coreboot.asm
 

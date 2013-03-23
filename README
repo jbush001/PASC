@@ -1,6 +1,6 @@
 Required to run:
 - Python 2.7
-- Icarus Verilog (for simulation)
+- Icarus Verilog (for simulation) [http://iverilog.icarus.com/]
 - Altera Quartus (for FPGA)
 
 To run in simulation:
@@ -22,11 +22,17 @@ vvp multi-sim.vvp +bin=../tests/sourcefile.hex
 
 Any value written to address 0xFFFF will be displayed on the console.  A trace file will be dumped into 'trace.lxt', which can be read with GTKWave or the like.
 
+
+----------
 To run on FPGA:
+1. Build the bootloader.  
 
-1. You'll need to initialize the contents of each local memory currently by uncommenting the $readmemh call into the initial clause of dpsram.v.  Put the appropriate assembly output as 'program.hex' in the fpga/cIIstarter directory.
+cd rtl
+make
 
-2. Synthesize design by opening 'fpga/cIIstarter/cIIstarter.qpf'.  Note that the design needs to be resynthesized each time the program is changed.
+2. You'll need to initialize the contents of each global memory uncommenting the $readmemh call into the initial clause of spsram.v.  Put the appropriate compiled program as 'program.hex' in the fpga/cIIstarter directory.
+
+3. Synthesize design by opening 'fpga/cIIstarter/cIIstarter.qpf'.  Note that the design needs to be resynthesized each time the program is changed.
 
 
 

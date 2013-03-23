@@ -53,7 +53,7 @@ module core
 	// This is delayed by one cycle
 	assign data_to_pipeline = local_memory_select_l ? local_mem_q : remote_read_val;
 
-	dpsram #(MEM_SIZE, 16, LMEM_ADDR_WIDTH) local_memory(
+	dpsram #(MEM_SIZE, 16, LMEM_ADDR_WIDTH, "core/coreboot.hex") local_memory(
 		.clk(clk),
 		.addr_a(iaddr[LMEM_ADDR_WIDTH - 1:0]),	// Instruction Port
 		.q_a(idata),

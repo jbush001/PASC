@@ -33,16 +33,7 @@ module multi_tb;
 	initial
 	begin
 		if ($value$plusargs("bin=%s", filename))
-		begin
-			$readmemh(filename, top.cluster.core0.local_memory.data);
-			$readmemh(filename, top.cluster.core1.local_memory.data);
-			$readmemh(filename, top.cluster.core2.local_memory.data);
-			$readmemh(filename, top.cluster.core3.local_memory.data);
-			$readmemh(filename, top.cluster.core4.local_memory.data);
-			$readmemh(filename, top.cluster.core5.local_memory.data);
-			$readmemh(filename, top.cluster.core6.local_memory.data);
-			$readmemh(filename, top.cluster.core7.local_memory.data);
-		end
+			$readmemh(filename, top.cluster.global_memory.data);
 		else
 		begin
 			$display("error opening memory image");

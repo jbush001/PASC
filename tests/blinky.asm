@@ -14,6 +14,9 @@
 # limitations under the License.
 # 
 
+					res 64
+					org 16
+
 					xor r3, r3, r3
 					ldi r0, 4096
 					store r0, (r3)

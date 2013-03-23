@@ -48,7 +48,15 @@ spinlock:			store r1, (r0)	# acquire semaphore
 
 					# wait for a spell
 					xor r7, r7, r7
-wait0:				addi r7, r7, 1
+wait0:				nop
+					nop
+					nop
+					nop
+					nop
+					nop
+					nop
+					nop
+					addi r7, r7, 1
 					bzc wait0
 					nop
 					nop

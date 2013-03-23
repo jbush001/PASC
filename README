@@ -3,20 +3,21 @@ Required to run:
 - Icarus Verilog (for simulation) [http://iverilog.icarus.com/]
 - Altera Quartus (for FPGA)
 
-To run in simulation:
-
-1. Assemble a program (in the test directory), with 'sourcefile' in the command line below being the file to be run:
+Assembling programs (in the test directory)
+Replace 'sourcefile' in the command line below being the file to be run:
 
 tools/assemble.py tests/sourcefile.hex tests/sourcefile.asm
 
 (First parameter is the output file and second is the source.  Be careful not to swap or you'll need to write the program again :)
 
-2. Build the verilog model:
+To run in simulation:
+
+1. Build the verilog model:
 
 cd rtl
 make
 
-3. Run a verilog model (making the +bin parameter point to the program you want to run).
+2. Run a verilog model (making the +bin parameter point to the program you want to run).
 
 vvp multi-sim.vvp +bin=../tests/sourcefile.hex -lxt2
 
@@ -30,10 +31,7 @@ To run on FPGA:
 cd rtl
 make
 
-2. You'll need to initialize the contents of each global memory uncommenting the $readmemh call into the initial clause of spsram.v.  Put the appropriate compiled program as 'program.hex' in the fpga/cIIstarter directory.
+2. Copy the appropriate assembled program into fpga/cIIstarter/program.hex.
 
 3. Synthesize design by opening 'fpga/cIIstarter/cIIstarter.qpf'.  Note that the design needs to be resynthesized each time the program is changed.
-
-
-
 

@@ -22,6 +22,7 @@ module dpsram
 	#(parameter SIZE=4096,
 	parameter DATA_WIDTH=16,
 	parameter ADDR_WIDTH=$clog2(SIZE),
+	parameter ENABLE_INIT=0,
 	parameter INIT_FILE="")
 
 	(input 							clk,
@@ -45,7 +46,8 @@ module dpsram
 		q_a = 0;
 		q_b = 0;
 		
-		$readmemh(INIT_FILE, data);
+		if (ENABLE_INIT)
+			$readmemh(INIT_FILE, data);
 	end
 
 	// Port A

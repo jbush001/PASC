@@ -21,7 +21,9 @@
 module spsram
 	#(parameter SIZE=4096,
 	parameter DATA_WIDTH=16,
-	parameter ADDR_WIDTH=$clog2(SIZE))
+	parameter ADDR_WIDTH=$clog2(SIZE),
+	parameter ENABLE_INIT = 0,
+	parameter INIT_FILE="")
 
 	(input 							clk,
 	input[ADDR_WIDTH - 1:0] 		addr_a,
@@ -39,7 +41,8 @@ module spsram
 
 		q_a = 0;
 
-//		$readmemh("program.hex", data);
+		if (ENABLE_INIT)
+			$readmemh(INIT_FILE, data);
 	end
 
 	// Port A

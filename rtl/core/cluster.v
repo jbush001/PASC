@@ -191,7 +191,13 @@ module cluster(
 
 	localparam GMEM_ADDR_WIDTH = $clog2(GLOBAL_MEMORY_SIZE);
 
-	spsram #(GLOBAL_MEMORY_SIZE, 16, GMEM_ADDR_WIDTH) global_memory(
+	spsram 
+`ifdef FEATURE_FPGA
+	#(GLOBAL_MEMORY_SIZE, 16, GMEM_ADDR_WIDTH, 1, "program.hex") 
+`else
+	#(GLOBAL_MEMORY_SIZE, 16, GMEM_ADDR_WIDTH) 
+`endif
+	global_memory(
 		.clk(clk),
 		.addr_a(remote_addr[GMEM_ADDR_WIDTH - 1:0]),
 		.q_a(global_mem_q),

@@ -14,18 +14,22 @@
 // limitations under the License.
 // 
 
+//
+// A single core, including an execution pipeline and local memory
+//
+
 module core
 	#(parameter MEM_SIZE = 2048,
 	parameter CORE_ID = 0)
 	
 	(input clk,
 	input reset,
-	output[15:0] remote_addr,
-	output remote_wren,
-	output remote_rden,
-	input remote_ready,
-	output[15:0] remote_write_val,
-	input[15:0] remote_read_val);
+	output[15:0] shared_addr,
+	output shared_wren,
+	output shared_rden,
+	input shared_ready,
+	output[15:0] shared_write_val,
+	input[15:0] shared_read_val);
 
 	localparam LMEM_ADDR_WIDTH = $clog2(MEM_SIZE);
 
@@ -44,14 +48,16 @@ module core
 	wire local_memory_write;
 	
 	assign local_memory_select = daddr[15:14] == 2'b00;	// Bottom 16k words
-	assign remote_wren = !local_memory_select && dwrite_en;
-	assign remote_rden = !local_memory_select && dread_en;
-	assign remote_addr = daddr;
-	assign remote_write_val = ddata_out;
 	assign local_memory_write = dwrite_en && local_memory_select;
 
+	// Writes to shared locations (global memory and device registers)
+	assign shared_wren = !local_memory_select && dwrite_en;
+	assign shared_rden = !local_memory_select && dread_en;
+	assign shared_addr = daddr;
+	assign shared_write_val = ddata_out;
+
 	// This is delayed by one cycle
-	assign data_to_pipeline = local_memory_select_l ? local_mem_q : remote_read_val;
+	assign data_to_pipeline = local_memory_select_l ? local_mem_q : shared_read_val;
 
 	dpsram #(MEM_SIZE, 16, LMEM_ADDR_WIDTH, 1, "coreboot.hex") local_memory(
 		.clk(clk),
@@ -64,7 +70,7 @@ module core
 		.we_b(local_memory_write),
 		.data_b(ddata_out));
 
-	assign stall_pipeline = !remote_ready && (dread_en || dwrite_en) 
+	assign stall_pipeline = !shared_ready && (dread_en || dwrite_en) 
 		&& !local_memory_select;
 
 	pipeline pipeline(

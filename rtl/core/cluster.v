@@ -16,6 +16,11 @@
 
 `define STATIC_ARBITRATION 1
 
+//
+// A cluster is the group of processors and global memory that is shared
+// between them.
+//
+
 module cluster(
 	input 			clk,
 	input			reset,
@@ -30,11 +35,11 @@ module cluster(
 	localparam LOCAL_MEMORY_SIZE = 512;
 	localparam GLOBAL_MEMORY_SIZE = 1024;
 
-	reg[15:0] remote_addr;
-	wire[15:0] remote_read_val;
-	reg remote_wren;
-	reg remote_rden;
-	reg[15:0] remote_write_val;
+	reg[15:0] shared_addr;
+	wire[15:0] shared_read_val;
+	reg shared_wren;
+	reg shared_rden;
+	reg[15:0] shared_write_val;
 	wire[15:0] global_mem_q;
 	wire device_memory_select;
 	reg device_memory_select_l;
@@ -44,150 +49,150 @@ module cluster(
 	// Interconnecting wires
 	// (Icarus verilog does not support generate, hence all of the manual
 	// instantiations).
-	wire[15:0] remote_addr0;
-	wire remote_wren0;
-	wire remote_rden0;
-	wire[15:0] remote_write_val0;
-	wire[15:0] remote_addr1;
-	wire remote_wren1;
-	wire remote_rden1;
-	wire[15:0] remote_write_val1;
-	wire[15:0] remote_addr2;
-	wire remote_wren2;
-	wire remote_rden2;
-	wire[15:0] remote_write_val2;
-	wire[15:0] remote_addr3;
-	wire remote_wren3;
-	wire remote_rden3;
-	wire[15:0] remote_write_val3;
-	wire[15:0] remote_addr4;
-	wire remote_wren4;
-	wire remote_rden4;
-	wire[15:0] remote_write_val4;
-	wire[15:0] remote_addr5;
-	wire remote_wren5;
-	wire remote_rden5;
-	wire[15:0] remote_write_val5;
-	wire[15:0] remote_addr6;
-	wire remote_wren6;
-	wire remote_rden6;
-	wire[15:0] remote_write_val6;
-	wire[15:0] remote_addr7;
-	wire remote_wren7;
-	wire remote_rden7;
-	wire[15:0] remote_write_val7;
+	wire[15:0] shared_addr0;
+	wire shared_wren0;
+	wire shared_rden0;
+	wire[15:0] shared_write_val0;
+	wire[15:0] shared_addr1;
+	wire shared_wren1;
+	wire shared_rden1;
+	wire[15:0] shared_write_val1;
+	wire[15:0] shared_addr2;
+	wire shared_wren2;
+	wire shared_rden2;
+	wire[15:0] shared_write_val2;
+	wire[15:0] shared_addr3;
+	wire shared_wren3;
+	wire shared_rden3;
+	wire[15:0] shared_write_val3;
+	wire[15:0] shared_addr4;
+	wire shared_wren4;
+	wire shared_rden4;
+	wire[15:0] shared_write_val4;
+	wire[15:0] shared_addr5;
+	wire shared_wren5;
+	wire shared_rden5;
+	wire[15:0] shared_write_val5;
+	wire[15:0] shared_addr6;
+	wire shared_wren6;
+	wire shared_rden6;
+	wire[15:0] shared_write_val6;
+	wire[15:0] shared_addr7;
+	wire shared_wren7;
+	wire shared_rden7;
+	wire[15:0] shared_write_val7;
 
 	core #(LOCAL_MEMORY_SIZE, 4'd0) core0(
 		.clk(clk),
 		.reset(reset),
-		.remote_addr(remote_addr0),
-		.remote_wren(remote_wren0),	
-		.remote_rden(remote_rden0),
-		.remote_ready(core_enable[0]),
-		.remote_write_val(remote_write_val0),
-		.remote_read_val(remote_read_val));
+		.shared_addr(shared_addr0),
+		.shared_wren(shared_wren0),	
+		.shared_rden(shared_rden0),
+		.shared_ready(core_enable[0]),
+		.shared_write_val(shared_write_val0),
+		.shared_read_val(shared_read_val));
 
 	core #(LOCAL_MEMORY_SIZE, 4'd1) core1(
 		.clk(clk),
 		.reset(reset),
-		.remote_addr(remote_addr1),
-		.remote_wren(remote_wren1),	
-		.remote_rden(remote_rden1),
-		.remote_ready(core_enable[1]),
-		.remote_write_val(remote_write_val1),
-		.remote_read_val(remote_read_val));
+		.shared_addr(shared_addr1),
+		.shared_wren(shared_wren1),	
+		.shared_rden(shared_rden1),
+		.shared_ready(core_enable[1]),
+		.shared_write_val(shared_write_val1),
+		.shared_read_val(shared_read_val));
 
 	core #(LOCAL_MEMORY_SIZE, 4'd2) core2(
 		.clk(clk),
 		.reset(reset),
-		.remote_addr(remote_addr2),
-		.remote_wren(remote_wren2),	
-		.remote_rden(remote_rden2),
-		.remote_ready(core_enable[2]),
-		.remote_write_val(remote_write_val2),
-		.remote_read_val(remote_read_val));
+		.shared_addr(shared_addr2),
+		.shared_wren(shared_wren2),	
+		.shared_rden(shared_rden2),
+		.shared_ready(core_enable[2]),
+		.shared_write_val(shared_write_val2),
+		.shared_read_val(shared_read_val));
 
 	core #(LOCAL_MEMORY_SIZE, 4'd3) core3(
 		.clk(clk),
 		.reset(reset),
-		.remote_addr(remote_addr3),
-		.remote_wren(remote_wren3),	
-		.remote_rden(remote_rden3),
-		.remote_ready(core_enable[3]),
-		.remote_write_val(remote_write_val3),
-		.remote_read_val(remote_read_val));
+		.shared_addr(shared_addr3),
+		.shared_wren(shared_wren3),	
+		.shared_rden(shared_rden3),
+		.shared_ready(core_enable[3]),
+		.shared_write_val(shared_write_val3),
+		.shared_read_val(shared_read_val));
 
 	core #(LOCAL_MEMORY_SIZE, 4'd4) core4(
 		.clk(clk),
 		.reset(reset),
-		.remote_addr(remote_addr4),
-		.remote_wren(remote_wren4),	
-		.remote_rden(remote_rden4),
-		.remote_ready(core_enable[4]),
-		.remote_write_val(remote_write_val4),
-		.remote_read_val(remote_read_val));
+		.shared_addr(shared_addr4),
+		.shared_wren(shared_wren4),	
+		.shared_rden(shared_rden4),
+		.shared_ready(core_enable[4]),
+		.shared_write_val(shared_write_val4),
+		.shared_read_val(shared_read_val));
 
 	core #(LOCAL_MEMORY_SIZE, 4'd5) core5(
 		.clk(clk),
 		.reset(reset),
-		.remote_addr(remote_addr5),
-		.remote_wren(remote_wren5),	
-		.remote_rden(remote_rden5),
-		.remote_ready(core_enable[5]),
-		.remote_write_val(remote_write_val5),
-		.remote_read_val(remote_read_val));
+		.shared_addr(shared_addr5),
+		.shared_wren(shared_wren5),	
+		.shared_rden(shared_rden5),
+		.shared_ready(core_enable[5]),
+		.shared_write_val(shared_write_val5),
+		.shared_read_val(shared_read_val));
 
 	core #(LOCAL_MEMORY_SIZE, 4'd6) core6(
 		.clk(clk),
 		.reset(reset),
-		.remote_addr(remote_addr6),
-		.remote_wren(remote_wren6),	
-		.remote_rden(remote_rden6),
-		.remote_ready(core_enable[6]),
-		.remote_write_val(remote_write_val6),
-		.remote_read_val(remote_read_val));
+		.shared_addr(shared_addr6),
+		.shared_wren(shared_wren6),	
+		.shared_rden(shared_rden6),
+		.shared_ready(core_enable[6]),
+		.shared_write_val(shared_write_val6),
+		.shared_read_val(shared_read_val));
 
 	core #(LOCAL_MEMORY_SIZE, 4'd7) core7(
 		.clk(clk),
 		.reset(reset),
-		.remote_addr(remote_addr7),
-		.remote_wren(remote_wren7),	
-		.remote_rden(remote_rden7),
-		.remote_ready(core_enable[7]),
-		.remote_write_val(remote_write_val7),
-		.remote_read_val(remote_read_val));
+		.shared_addr(shared_addr7),
+		.shared_wren(shared_wren7),	
+		.shared_rden(shared_rden7),
+		.shared_ready(core_enable[7]),
+		.shared_write_val(shared_write_val7),
+		.shared_read_val(shared_read_val));
 	
 	// Request mux
 	always @*
 	begin
 		case (core_enable)
-			8'b10000000: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren7, remote_rden7, remote_addr7, remote_write_val7, 4'd7 };
-			8'b01000000: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren6, remote_rden6, remote_addr6, remote_write_val6, 4'd6 };
-			8'b00100000: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren5, remote_rden5, remote_addr5, remote_write_val5, 4'd5 };
-			8'b00010000: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren4, remote_rden4, remote_addr4, remote_write_val4, 4'd4 };
-			8'b00001000: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren3, remote_rden3, remote_addr3, remote_write_val3, 4'd3 };
-			8'b00000100: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren2, remote_rden2, remote_addr2, remote_write_val2, 4'd2 };
-			8'b00000010: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren1, remote_rden1, remote_addr1, remote_write_val1, 4'd1 };
-			default: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren0, remote_rden0, remote_addr0, remote_write_val0, 4'd0 };
+			8'b10000000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren7, shared_rden7, shared_addr7, shared_write_val7, 4'd7 };
+			8'b01000000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren6, shared_rden6, shared_addr6, shared_write_val6, 4'd6 };
+			8'b00100000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren5, shared_rden5, shared_addr5, shared_write_val5, 4'd5 };
+			8'b00010000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren4, shared_rden4, shared_addr4, shared_write_val4, 4'd4 };
+			8'b00001000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren3, shared_rden3, shared_addr3, shared_write_val3, 4'd3 };
+			8'b00000100: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren2, shared_rden2, shared_addr2, shared_write_val2, 4'd2 };
+			8'b00000010: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren1, shared_rden1, shared_addr1, shared_write_val1, 4'd1 };
+			default: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren0, shared_rden0, shared_addr0, shared_write_val0, 4'd0 };
 
 		endcase
 	end
 
-	assign device_memory_select = remote_addr[15:10] == 6'b111111;
-	assign device_addr = remote_addr[9:0];
-	assign global_mem_write = !device_memory_select && remote_wren;
-	assign remote_read_val = device_memory_select_l ? device_data_in : global_mem_q;
-	assign device_write_en = device_memory_select && remote_wren; 
-	assign device_read_en = device_memory_select && remote_rden;
-	assign device_data_out = remote_write_val;
+	assign device_memory_select = shared_addr[15:10] == 6'b111111;
+	assign device_addr = shared_addr[9:0];
+	assign global_mem_write = !device_memory_select && shared_wren;
+	assign shared_read_val = device_memory_select_l ? device_data_in : global_mem_q;
+	assign device_write_en = device_memory_select && shared_wren; 
+	assign device_read_en = device_memory_select && shared_rden;
+	assign device_data_out = shared_write_val;
 
 	localparam GMEM_ADDR_WIDTH = $clog2(GLOBAL_MEMORY_SIZE);
 
@@ -199,10 +204,10 @@ module cluster(
 `endif
 	global_memory(
 		.clk(clk),
-		.addr_a(remote_addr[GMEM_ADDR_WIDTH - 1:0]),
+		.addr_a(shared_addr[GMEM_ADDR_WIDTH - 1:0]),
 		.q_a(global_mem_q),
 		.we_a(global_mem_write),
-		.data_a(remote_write_val));
+		.data_a(shared_write_val));
 
 	always @(posedge reset, posedge clk)
 	begin
@@ -228,14 +233,14 @@ module cluster(
 	wire[NUM_CORES - 1:0] request;
 
 	assign request = {
-		remote_wren7 || remote_rden7,
-		remote_wren6 || remote_rden6,
-		remote_wren5 || remote_rden5,
-		remote_wren4 || remote_rden4,
-		remote_wren3 || remote_rden3,
-		remote_wren2 || remote_rden2,
-		remote_wren1 || remote_rden1,
-		remote_wren0 || remote_rden0
+		shared_wren7 || shared_rden7,
+		shared_wren6 || shared_rden6,
+		shared_wren5 || shared_rden5,
+		shared_wren4 || shared_rden4,
+		shared_wren3 || shared_rden3,
+		shared_wren2 || shared_rden2,
+		shared_wren1 || shared_rden1,
+		shared_wren0 || shared_rden0
 	};
 	
 	arbiter #(NUM_CORES) global_mem_arbiter(

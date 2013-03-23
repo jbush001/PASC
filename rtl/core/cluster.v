@@ -69,7 +69,7 @@ module cluster(
 	reg device_memory_select_l;
 	wire gmem_write;
 
-	reg[NUM_CORES-1:0] core_enable;
+	wire[NUM_CORES-1:0] core_enable;
 
 	core #(LOCAL_MEMORY_SIZE, 0) core0(
 		.clk(clk),
@@ -196,14 +196,41 @@ module cluster(
 	always @(posedge reset, posedge clk)
 	begin
 		if (reset)
-		begin
 			device_memory_select_l <= 0;
-			core_enable <= {{NUM_CORES - 1{1'b0}}, 1'b1};
-		end
 		else 
-		begin
 			device_memory_select_l <= device_memory_select;
-			core_enable = { core_enable[NUM_CORES - 2:0], core_enable[NUM_CORES - 1] };
-		end
 	end
+
+`ifdef STATIC_CORE_ENABLE
+	reg[NUM_CORES - 1:0] core_enable_ff;
+	
+	assign core_enable = core_enable_ff;
+
+	always @(posedge reset, posedge clk)
+	begin
+		if (reset)
+			core_enable_ff <= {{NUM_CORES - 1{1'b0}}, 1'b1};
+		else 
+			core_enable_ff = { core_enable_ff[NUM_CORES - 2:0], core_enable_ff[NUM_CORES - 1] };
+	end
+`else
+	wire[NUM_CORES - 1:0] request;
+
+	assign request = {
+		remote_wren7 || remote_rden7,
+		remote_wren6 || remote_rden6,
+		remote_wren5 || remote_rden5,
+		remote_wren4 || remote_rden4,
+		remote_wren3 || remote_rden3,
+		remote_wren2 || remote_rden2,
+		remote_wren1 || remote_rden1,
+		remote_wren0 || remote_rden0
+	};
+	
+	arbiter #(8) gmem_arbiter(
+		.clk(clk),
+		.reset(reset),
+		.request(request),
+		.grant_oh(core_enable));
+`endif
 endmodule

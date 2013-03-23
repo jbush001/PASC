@@ -20,6 +20,7 @@ SOURCES=core/dpsram.v \
 	core/cluster.v \
 	core/spsram.v \
 	core/top.v \
+	core/arbiter.v \
 	testbench/multi_tb.v 
 
 multi-sim.vvp: $(SOURCES) core/coreboot.hex

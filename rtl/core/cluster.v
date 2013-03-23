@@ -19,7 +19,7 @@
 module cluster(
 	input 			clk,
 	input			reset,
-	output reg[2:0]	device_core_id,
+	output reg[3:0]	device_core_id,
 	output			device_write_en,
 	output			device_read_en,
 	output[9:0]		device_addr,
@@ -28,12 +28,22 @@ module cluster(
 
 	localparam NUM_CORES = 8;
 	localparam LOCAL_MEMORY_SIZE = 512;
+	localparam GLOBAL_MEMORY_SIZE = 1024;
 
 	reg[15:0] remote_addr;
 	wire[15:0] remote_read_val;
 	reg remote_wren;
 	reg remote_rden;
 	reg[15:0] remote_write_val;
+	wire[15:0] global_mem_q;
+	wire device_memory_select;
+	reg device_memory_select_l;
+	wire global_mem_write;
+	wire[NUM_CORES-1:0] core_enable;
+
+	// Interconnecting wires
+	// (Icarus verilog does not support generate, hence all of the manual
+	// instantiations).
 	wire[15:0] remote_addr0;
 	wire remote_wren0;
 	wire remote_rden0;
@@ -66,14 +76,8 @@ module cluster(
 	wire remote_wren7;
 	wire remote_rden7;
 	wire[15:0] remote_write_val7;
-	wire[15:0] global_mem_q;
-	wire device_memory_select;
-	reg device_memory_select_l;
-	wire gmem_write;
 
-	wire[NUM_CORES-1:0] core_enable;
-
-	core #(LOCAL_MEMORY_SIZE, 0) core0(
+	core #(LOCAL_MEMORY_SIZE, 4'd0) core0(
 		.clk(clk),
 		.reset(reset),
 		.remote_addr(remote_addr0),
@@ -83,7 +87,7 @@ module cluster(
 		.remote_write_val(remote_write_val0),
 		.remote_read_val(remote_read_val));
 
-	core #(LOCAL_MEMORY_SIZE, 1) core1(
+	core #(LOCAL_MEMORY_SIZE, 4'd1) core1(
 		.clk(clk),
 		.reset(reset),
 		.remote_addr(remote_addr1),
@@ -93,7 +97,7 @@ module cluster(
 		.remote_write_val(remote_write_val1),
 		.remote_read_val(remote_read_val));
 
-	core #(LOCAL_MEMORY_SIZE, 2) core2(
+	core #(LOCAL_MEMORY_SIZE, 4'd2) core2(
 		.clk(clk),
 		.reset(reset),
 		.remote_addr(remote_addr2),
@@ -103,7 +107,7 @@ module cluster(
 		.remote_write_val(remote_write_val2),
 		.remote_read_val(remote_read_val));
 
-	core #(LOCAL_MEMORY_SIZE, 3) core3(
+	core #(LOCAL_MEMORY_SIZE, 4'd3) core3(
 		.clk(clk),
 		.reset(reset),
 		.remote_addr(remote_addr3),
@@ -113,7 +117,7 @@ module cluster(
 		.remote_write_val(remote_write_val3),
 		.remote_read_val(remote_read_val));
 
-	core #(LOCAL_MEMORY_SIZE, 4) core4(
+	core #(LOCAL_MEMORY_SIZE, 4'd4) core4(
 		.clk(clk),
 		.reset(reset),
 		.remote_addr(remote_addr4),
@@ -123,7 +127,7 @@ module cluster(
 		.remote_write_val(remote_write_val4),
 		.remote_read_val(remote_read_val));
 
-	core #(LOCAL_MEMORY_SIZE, 5) core5(
+	core #(LOCAL_MEMORY_SIZE, 4'd5) core5(
 		.clk(clk),
 		.reset(reset),
 		.remote_addr(remote_addr5),
@@ -133,7 +137,7 @@ module cluster(
 		.remote_write_val(remote_write_val5),
 		.remote_read_val(remote_read_val));
 
-	core #(LOCAL_MEMORY_SIZE, 6) core6(
+	core #(LOCAL_MEMORY_SIZE, 4'd6) core6(
 		.clk(clk),
 		.reset(reset),
 		.remote_addr(remote_addr6),
@@ -143,7 +147,7 @@ module cluster(
 		.remote_write_val(remote_write_val6),
 		.remote_read_val(remote_read_val));
 
-	core #(LOCAL_MEMORY_SIZE, 7) core7(
+	core #(LOCAL_MEMORY_SIZE, 4'd7) core7(
 		.clk(clk),
 		.reset(reset),
 		.remote_addr(remote_addr7),
@@ -158,41 +162,40 @@ module cluster(
 	begin
 		case (core_enable)
 			8'b10000000: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren7, remote_rden7, remote_addr7, remote_write_val7, 3'd7 };
+				= { remote_wren7, remote_rden7, remote_addr7, remote_write_val7, 4'd7 };
 			8'b01000000: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren6, remote_rden6, remote_addr6, remote_write_val6, 3'd6 };
+				= { remote_wren6, remote_rden6, remote_addr6, remote_write_val6, 4'd6 };
 			8'b00100000: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren5, remote_rden5, remote_addr5, remote_write_val5, 3'd5 };
+				= { remote_wren5, remote_rden5, remote_addr5, remote_write_val5, 4'd5 };
 			8'b00010000: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren4, remote_rden4, remote_addr4, remote_write_val4, 3'd4 };
+				= { remote_wren4, remote_rden4, remote_addr4, remote_write_val4, 4'd4 };
 			8'b00001000: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren3, remote_rden3, remote_addr3, remote_write_val3, 3'd3 };
+				= { remote_wren3, remote_rden3, remote_addr3, remote_write_val3, 4'd3 };
 			8'b00000100: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren2, remote_rden2, remote_addr2, remote_write_val2, 3'd2 };
+				= { remote_wren2, remote_rden2, remote_addr2, remote_write_val2, 4'd2 };
 			8'b00000010: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren1, remote_rden1, remote_addr1, remote_write_val1, 3'd1 };
+				= { remote_wren1, remote_rden1, remote_addr1, remote_write_val1, 4'd1 };
 			default: { remote_wren, remote_rden, remote_addr, remote_write_val, device_core_id } 
-				= { remote_wren0, remote_rden0, remote_addr0, remote_write_val0, 3'd0 };
+				= { remote_wren0, remote_rden0, remote_addr0, remote_write_val0, 4'd0 };
 
 		endcase
 	end
 
 	assign device_memory_select = remote_addr[15:10] == 6'b111111;
 	assign device_addr = remote_addr[9:0];
-	assign gmem_write = !device_memory_select && remote_wren;
+	assign global_mem_write = !device_memory_select && remote_wren;
 	assign remote_read_val = device_memory_select_l ? device_data_in : global_mem_q;
 	assign device_write_en = device_memory_select && remote_wren; 
 	assign device_read_en = device_memory_select && remote_rden;
 	assign device_data_out = remote_write_val;
 
-	localparam GMEM_SIZE = 1024;
-	localparam GMEM_ADDR_WIDTH = $clog2(GMEM_SIZE);
+	localparam GMEM_ADDR_WIDTH = $clog2(GLOBAL_MEMORY_SIZE);
 
-	spsram #(GMEM_SIZE, 16, GMEM_ADDR_WIDTH) global_memory(
+	spsram #(GLOBAL_MEMORY_SIZE, 16, GMEM_ADDR_WIDTH) global_memory(
 		.clk(clk),
 		.addr_a(remote_addr[GMEM_ADDR_WIDTH - 1:0]),
 		.q_a(global_mem_q),
-		.we_a(gmem_write),
+		.we_a(global_mem_write),
 		.data_a(remote_write_val));
 
 	always @(posedge reset, posedge clk)
@@ -229,7 +232,7 @@ module cluster(
 		remote_wren0 || remote_rden0
 	};
 	
-	arbiter #(8) gmem_arbiter(
+	arbiter #(NUM_CORES) global_mem_arbiter(
 		.clk(clk),
 		.reset(reset),
 		.request(request),

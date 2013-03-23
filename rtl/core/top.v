@@ -20,7 +20,7 @@ module top(
 	output reg			output_enable);
 	
 	reg reset;
-	wire[2:0] device_core_id;
+	wire[3:0] device_core_id;
 	wire device_write_en;
 	wire device_read_en;
 	wire[9:0] device_addr;
@@ -37,9 +37,9 @@ module top(
 		.device_data_out(device_data_out),
 		.device_data_in(device_data_in));
 
-	reg[2:0] sem_holder0;
+	reg[3:0] sem_holder0;
 	reg sem_held0;
-	reg[2:0] sem_holder1;
+	reg[3:0] sem_holder1;
 	reg sem_held1;
 	reg[7:0] reset_count;
 

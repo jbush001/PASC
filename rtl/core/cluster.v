@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`define STATIC_CORE_ENABLE 1
+
 module cluster(
 	input 			clk,
 	input			reset,

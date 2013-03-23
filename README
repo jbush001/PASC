@@ -18,7 +18,7 @@ make
 
 3. Run a verilog model (making the +bin parameter point to the program you want to run).
 
-vvp multi-sim.vvp +bin=../tests/sourcefile.hex
+vvp multi-sim.vvp +bin=../tests/sourcefile.hex -lxt2
 
 Any value written to address 0xFFFF will be displayed on the console.  A trace file will be dumped into 'trace.lxt', which can be read with GTKWave or the like.
 

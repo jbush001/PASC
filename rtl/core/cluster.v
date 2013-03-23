@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-`define STATIC_CORE_ENABLE 1
+`define STATIC_ARBITRATION 1
 
 module cluster(
 	input 			clk,
@@ -212,7 +212,7 @@ module cluster(
 			device_memory_select_l <= device_memory_select;
 	end
 
-`ifdef STATIC_CORE_ENABLE
+`ifdef STATIC_ARBITRATION
 	reg[NUM_CORES - 1:0] core_enable_ff;
 	
 	assign core_enable = core_enable_ff;

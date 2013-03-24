@@ -59,6 +59,8 @@ module core
 	// This is delayed by one cycle
 	assign data_to_pipeline = local_memory_select_l ? local_mem_q : shared_read_val;
 
+	// The first 16 words in the local address space are a small boot ROM.
+	// This is emulated by initializing memory with that program (coreboot.hex)
 	dpsram #(MEM_SIZE, 16, LMEM_ADDR_WIDTH, 1, "coreboot.hex") local_memory(
 		.clk(clk),
 		.addr_a(iaddr[LMEM_ADDR_WIDTH - 1:0]),	// Instruction Port

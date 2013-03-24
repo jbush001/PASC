@@ -1,37 +1,36 @@
-Required to run:
-- Python 2.7
-- Icarus Verilog (for simulation) [http://iverilog.icarus.com/]
-- Altera Quartus (for FPGA)
+== Required software =========================
+ - Python 2.7
+ - Icarus Verilog (for simulation) [http://iverilog.icarus.com/]
+ - Altera Quartus (for FPGA)
+ - GNU Make
 
-Assembling programs (in the test directory)
-Replace 'sourcefile' in the command line below being the file to be run:
+== Assembling programs (in the test directory) =====
 
-tools/assemble.py tests/sourcefile.hex tests/sourcefile.asm
+  tools/assemble.py tests/sourcefile.hex tests/sourcefile.asm
 
-(First parameter is the output file and second is the source.  Be careful not to swap or you'll need to write the program again :)
+  Replace 'sourcefile' in the command line below being the file to be run
 
-To run in simulation:
+== Running in Verilog simulation =============
 
-1. Build the verilog model:
+  1. Build the verilog model:
 
-cd rtl
-make
+     cd rtl
+     make
 
-2. Run a verilog model (making the +bin parameter point to the program you want to run).
+  2. Run a verilog model making the +bin parameter point to the program you want to run, which should have been assembled already above.
 
-vvp multi-sim.vvp +bin=../tests/sourcefile.hex -lxt2
+     vvp multi-sim.vvp +bin=../tests/sourcefile.hex -lxt2
 
-Any value written to address 0xFFFF will be displayed on the console.  A trace file will be dumped into 'trace.lxt', which can be read with GTKWave or the like.
+  Any value written to address 0xFFFF will be displayed on the console.  A trace file will be dumped into 'trace.lxt', which can be read with GTKWave or the like.
 
+== Running on FPGA ============================
 
-----------
-To run on FPGA:
-1. Build the bootloader.  
+  1. Assemble the bootloader.  
 
-cd rtl
-make
+     cd rtl
+     make
 
-2. Copy the appropriate assembled program into fpga/cIIstarter/program.hex.
+  2. Copy the assembled program into fpga/cIIstarter/program.hex.
 
-3. Synthesize design by opening 'fpga/cIIstarter/cIIstarter.qpf'.  Note that the design needs to be resynthesized each time the program is changed.
+  3. Synthesize design by opening 'fpga/cIIstarter/cIIstarter.qpf'.  Note that the design needs to be resynthesized each time the program is changed.
 

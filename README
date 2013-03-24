@@ -8,7 +8,7 @@
 
   tools/assemble.py tests/sourcefile.hex tests/sourcefile.asm
 
-  Replace 'sourcefile' in the command line below being the file to be run
+  Replace 'sourcefile' in the command line with the desired file.
 
 == Running in Verilog simulation =====================
 

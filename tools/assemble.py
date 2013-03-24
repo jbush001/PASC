@@ -26,9 +26,10 @@ class AssembleError(Exception):
 		return str(self.lineno) + ': ' + self.msg
 
 class CodeBuilder:
-	FIXUP_UNCONDITIONAL = 0
-	FIXUP_CONDITIONAL = 1
-	FIXUP_DATA_REF = 2
+	FIXUP_UNCONDITIONAL = 0		# Unconditional branch instruction
+	FIXUP_CONDITIONAL = 1		# Conditional branch instruciton
+	FIXUP_LEA = 2				# LEA pseudo op (LUI/ADDI combo)
+	FIXUP_LABEL_ADDR = 3		# Label address as data (res)
 
 	def __init__(self):
 		self.fixups = []
@@ -88,9 +89,13 @@ class CodeBuilder:
 		self.labels[label] = self.getPc()
 
 	def emitLea(self, lineno, reg, target):
-		self.fixups += [ ( self.FIXUP_DATA_REF, len(self.code), self.getPc(), target, lineno ) ]
+		self.fixups += [ ( self.FIXUP_LEA, len(self.code), self.getPc(), target, lineno ) ]
 		self.emitLui(reg, 0)
 		self.emitAddi(reg, reg, 0)
+
+	def emitLabelDataRef(self, lineno, target):
+		self.fixups += [ ( self.FIXUP_LABEL_ADDR, len(self.code), self.getPc(), target, lineno ) ]
+		self.emitData(0)
 
 	def getPc(self):
 		return self.currentPc
@@ -102,10 +107,13 @@ class CodeBuilder:
 		
 			targetAddress = self.labels[label]
 			offset = targetAddress - address - 1
-			if type == self.FIXUP_DATA_REF:
+			if type == self.FIXUP_LEA:
 				# LUI followed by ADDI
 				self.code[codeOffset] |= (((targetAddress >> 6) & 0x3ff) << 3) 
 				self.code[codeOffset + 1] |= ((targetAddress & 0x3f) << 6)
+			elif type == self.FIXUP_LABEL_ADDR:
+				# Label address emitted as data (lookup table)
+				self.code[codeOffset] = targetAddress
 			elif type == self.FIXUP_UNCONDITIONAL:
 				if offset > 0x7fff or offset < -0x7fff:
 					raise AssembleError('fixup out of range', lineno)
@@ -133,6 +141,8 @@ class Parser:
 		self.builder = builder
 		while self._parseInstruction():
 			pass
+
+		self.builder.emitLabel('__end')
 
 	def _match(self, want):
 		got = self.lexer.get_token()
@@ -219,8 +229,16 @@ class Parser:
 			elif token == 'res':
 				# Reserve data words
 				while True:
-					value = self._parseNumber()
-					self.builder.emitData(value)
+					lookahead = self.lexer.get_token()
+					if lookahead[0].isdigit():
+						# Raw data value
+						self.lexer.push_token(lookahead)
+						value = self._parseNumber()
+						self.builder.emitData(value)
+					else:
+						# Label address
+						self.builder.emitLabelDataRef(self.lexer.lineno, lookahead)
+
 					lookahead = self.lexer.get_token()
 					if lookahead != ',':
 						self.lexer.push_token(lookahead)

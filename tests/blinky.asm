@@ -14,7 +14,7 @@
 # limitations under the License.
 # 
 
-					res 64
+					res __end	# Length for bootloader
 					org 16
 
 					xor r3, r3, r3

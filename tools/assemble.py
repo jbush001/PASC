@@ -343,17 +343,18 @@ if len(sys.argv) != 3:
 	print 'Usage: assemble <output file> <input file>'
 	sys.exit(1)
 
-outputFile = open(sys.argv[1], 'w')
-inputFile = open(sys.argv[2], 'r')
-
 builder = CodeBuilder()
+
+inputFile = open(sys.argv[2], 'r')
 parser = Parser(inputFile)
 parser.parseSource(builder)
-builder.doFixups()
-builder.dumpHex(outputFile)
-
-outputFile.close()
 inputFile.close()
+
+builder.doFixups()
+
+outputFile = open(sys.argv[1], 'w')
+builder.dumpHex(outputFile)
+outputFile.close()
 
 
 

@@ -10,7 +10,7 @@
 
   Replace 'sourcefile' in the command line below being the file to be run
 
-== Running in Verilog simulation =============
+== Running in Verilog simulation =====================
 
   1. Build the verilog model:
 
@@ -23,7 +23,7 @@
 
   Any value written to address 0xFFFF will be displayed on the console.  A trace file will be dumped into 'trace.lxt', which can be read with GTKWave or the like.
 
-== Running on FPGA ============================
+== Running on FPGA (Cyclone II Starter Kit) ===============
 
   1. Assemble the bootloader.  
 

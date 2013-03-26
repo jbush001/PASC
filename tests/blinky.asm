@@ -19,7 +19,7 @@
 
 					xor r3, r3, r3
 					ldi r0, 4096
-					store r0, (r3)
+					store r3, (r0)
 
 
 mainloop:			ldi r0, -2		# semaphore address

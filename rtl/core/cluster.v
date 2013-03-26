@@ -14,8 +14,6 @@
 // limitations under the License.
 // 
 
-`define STATIC_ARBITRATION 1
-
 //
 // A cluster is the group of processors and global memory that is shared
 // between them.

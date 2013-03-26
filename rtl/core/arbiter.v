@@ -38,18 +38,26 @@ module arbiter
 	output reg[NUM_ENTRIES - 1:0]	grant_oh);
 
 	reg[NUM_ENTRIES - 1:0] base;
-	wire[NUM_ENTRIES * 2 - 1:0]	double_request = { request, request };
+	wire[NUM_ENTRIES * 2 - 1:0] double_request = { request, request };
 	wire[NUM_ENTRIES * 2 - 1:0] double_grant = double_request 
 		& ~(double_request - base);
+	wire[NUM_ENTRIES - 1:0] grant_nxt = double_grant[NUM_ENTRIES * 2 - 1:NUM_ENTRIES] 
+		| double_grant[NUM_ENTRIES - 1:0];
 
 	always @(posedge clk, posedge reset)
 	begin
-		grant_oh <= double_grant[NUM_ENTRIES * 2 - 1:NUM_ENTRIES] 
-			| double_grant[NUM_ENTRIES - 1:0];
 		if (reset)
+		begin
 			base <= 1;
-		else if (request != 0)
-			base <= { grant_oh[NUM_ENTRIES - 2:0], grant_oh[NUM_ENTRIES - 1] };	// Rotate left
+			grant_oh <= 0;
+		end
+		else 
+		begin
+			if (grant_nxt != 0)
+				base <= { grant_nxt[NUM_ENTRIES - 2:0], grant_nxt[NUM_ENTRIES - 1] }; // Rotate left
+
+			grant_oh <= grant_nxt;
+		end
 	end
 endmodule
 

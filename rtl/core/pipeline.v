@@ -42,6 +42,7 @@ module pipeline(
 
 	localparam LINK_REGISTER = 3'd7;
 
+	// Instruction Type Field Values (bits 15-13)
 	localparam IT_ARITH = 3'b000;
 	localparam IT_LOAD = 3'b001;
 	localparam IT_STORE = 3'b010;
@@ -51,6 +52,7 @@ module pipeline(
 	localparam IT_UNCONDBR = 3'b110;
 	localparam IT_BRANCHREG = 3'b111;
 
+	// ALU operation (low bits of arithmetic instruction operation field)
 	localparam OP_AND = 3'b000;
 	localparam OP_OR = 3'b001;
 	localparam OP_SHL = 3'b010;
@@ -60,18 +62,18 @@ module pipeline(
 	localparam OP_XOR = 3'b110;
 	localparam OP_NOT = 3'b111;
 	
+	// Condition flags
 	localparam CC_Z = 2'd0;
 	localparam CC_N = 2'd1;
 	localparam CC_C = 2'd2;
 	localparam CC_O = 2'd3;
-
-	integer i;
 
 	// Architectural State
 	reg[15:0] pc;
 	reg[15:0] registers[0:7];
 	reg[3:0] condition_codes;
 	
+	integer i;
 	initial
 	begin
 		for (i = 0; i < 8; i = i + 1)
@@ -218,7 +220,9 @@ module pipeline(
 		|| ex_instruction_type == IT_UNCONDBR
 		|| ex_instruction_type == IT_BRANCHREG;
 
-	// ALU Operand1 
+	// ALU Operand1. Bypasses results from end of execute/writeback stages.
+	// This will also select PC as the first operand for branches (reusing
+	// the ALU to compute the branch target).
 	always @*
 	begin
 		if (ex_is_branch)
@@ -231,8 +235,9 @@ module pipeline(
 			ex_operand1 = id_ex_rega;
 	end
 
-	// Bypass regb (for stores, we will use this for the value to be stored,
-	// and operand 2 will contain the offset).
+	// Bypass regb from execute/writeback stages.
+	// for stores, we will use this for the value to be stored, and operand 2 will 
+	// contain the offset.
 	always @*
 	begin
 		if (ex_wb_has_writeback && ex_wb_instruction[2:0] == id_ex_instruction[8:6])
@@ -243,7 +248,8 @@ module pipeline(
 			ex_regb_bypassed = id_ex_regb;
 	end
 	
-	// ALU Operand 2
+	// ALU Operand 2.  Select either register value or immediate value.  
+	// The ALU is also overloaded to compute memory access addresses.
 	always @*
 	begin
 		if (ex_instruction_type == IT_ARITH)

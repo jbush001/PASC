@@ -51,7 +51,7 @@ module top(
 
 	always @(posedge clk)
 	begin
-		// Release reset
+		// Release reset after 8 clock cycles.
 		reset_count <= { reset_count[6:0], 1'b1 };
 		if (reset_count == 8'b11111111)
 			reset <= 0;

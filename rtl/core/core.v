@@ -19,8 +19,7 @@
 //
 
 module core
-	#(parameter MEM_SIZE = 2048,
-	parameter CORE_ID = 0)
+	#(parameter LOCAL_MEMORY_SIZE = 2048)
 	
 	(input clk,
 	input reset,
@@ -31,7 +30,7 @@ module core
 	output[15:0] shared_write_val,
 	input[15:0] shared_read_val);
 
-	localparam LMEM_ADDR_WIDTH = $clog2(MEM_SIZE);
+	localparam LOCAL_MEM_ADDR_WIDTH = $clog2(LOCAL_MEMORY_SIZE);
 
 	wire[15:0] iaddr;
 	wire[15:0] idata;
@@ -61,13 +60,15 @@ module core
 
 	// The first 16 words in the local address space are a small boot ROM.
 	// This is emulated by initializing memory with that program (coreboot.hex)
-	dpsram #(MEM_SIZE, 16, LMEM_ADDR_WIDTH, 1, "coreboot.hex") local_memory(
+	dpsram #(LOCAL_MEMORY_SIZE, 16, LOCAL_MEM_ADDR_WIDTH, 1, "coreboot.hex") local_memory(
 		.clk(clk),
-		.addr_a(iaddr[LMEM_ADDR_WIDTH - 1:0]),	// Instruction Port
+		// Instruction Port
+		.addr_a(iaddr[LOCAL_MEM_ADDR_WIDTH - 1:0]),	
 		.q_a(idata),
 		.we_a(1'b0),
 		.data_a(16'd0),
-		.addr_b(daddr[LMEM_ADDR_WIDTH - 1:0]),	// Data Port
+		// Data Port
+		.addr_b(daddr[LOCAL_MEM_ADDR_WIDTH - 1:0]),
 		.q_b(local_mem_q),
 		.we_b(local_memory_write),
 		.data_b(ddata_out));

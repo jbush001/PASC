@@ -80,7 +80,7 @@ module cluster(
 	wire shared_rden7;
 	wire[15:0] shared_write_val7;
 
-	core #(LOCAL_MEMORY_SIZE, 4'd0) core0(
+	core #(LOCAL_MEMORY_SIZE) core0(
 		.clk(clk),
 		.reset(reset),
 		.shared_addr(shared_addr0),
@@ -90,7 +90,7 @@ module cluster(
 		.shared_write_val(shared_write_val0),
 		.shared_read_val(shared_read_val));
 
-	core #(LOCAL_MEMORY_SIZE, 4'd1) core1(
+	core #(LOCAL_MEMORY_SIZE) core1(
 		.clk(clk),
 		.reset(reset),
 		.shared_addr(shared_addr1),
@@ -100,7 +100,7 @@ module cluster(
 		.shared_write_val(shared_write_val1),
 		.shared_read_val(shared_read_val));
 
-	core #(LOCAL_MEMORY_SIZE, 4'd2) core2(
+	core #(LOCAL_MEMORY_SIZE) core2(
 		.clk(clk),
 		.reset(reset),
 		.shared_addr(shared_addr2),
@@ -110,7 +110,7 @@ module cluster(
 		.shared_write_val(shared_write_val2),
 		.shared_read_val(shared_read_val));
 
-	core #(LOCAL_MEMORY_SIZE, 4'd3) core3(
+	core #(LOCAL_MEMORY_SIZE) core3(
 		.clk(clk),
 		.reset(reset),
 		.shared_addr(shared_addr3),
@@ -120,7 +120,7 @@ module cluster(
 		.shared_write_val(shared_write_val3),
 		.shared_read_val(shared_read_val));
 
-	core #(LOCAL_MEMORY_SIZE, 4'd4) core4(
+	core #(LOCAL_MEMORY_SIZE) core4(
 		.clk(clk),
 		.reset(reset),
 		.shared_addr(shared_addr4),
@@ -130,7 +130,7 @@ module cluster(
 		.shared_write_val(shared_write_val4),
 		.shared_read_val(shared_read_val));
 
-	core #(LOCAL_MEMORY_SIZE, 4'd5) core5(
+	core #(LOCAL_MEMORY_SIZE) core5(
 		.clk(clk),
 		.reset(reset),
 		.shared_addr(shared_addr5),
@@ -140,7 +140,7 @@ module cluster(
 		.shared_write_val(shared_write_val5),
 		.shared_read_val(shared_read_val));
 
-	core #(LOCAL_MEMORY_SIZE, 4'd6) core6(
+	core #(LOCAL_MEMORY_SIZE) core6(
 		.clk(clk),
 		.reset(reset),
 		.shared_addr(shared_addr6),
@@ -150,7 +150,7 @@ module cluster(
 		.shared_write_val(shared_write_val6),
 		.shared_read_val(shared_read_val));
 
-	core #(LOCAL_MEMORY_SIZE, 4'd7) core7(
+	core #(LOCAL_MEMORY_SIZE) core7(
 		.clk(clk),
 		.reset(reset),
 		.shared_addr(shared_addr7),

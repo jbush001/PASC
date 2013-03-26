@@ -18,9 +18,9 @@
 // Round robin arbiter.
 // The incoming signal 'request' indicates units that would like to access some
 // shared resource.  Each cycle, the signal grant_oh (one hot) will set one
-// bit to indicate the unit that should receive access. If update_lru is set,
-// it will update its state so the unit that was granted will not receive access
-// again until the other units have an opportunity to access it.
+// bit to indicate the unit that should receive access.  Once a unit has
+// been granted access, it will not get it again until all other units that 
+// are currently requesting access receive it.
 //
 // Idea taken from Altera's Advanced Synthesis Cookbook.  Basically, if you 
 // subtract a value with one set bit from another, each more-significant 

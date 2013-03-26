@@ -32,20 +32,20 @@
 module arbiter
 	#(parameter NUM_ENTRIES = 4)
 
-	(input						clk,
-	input						reset,
-	input[NUM_ENTRIES - 1:0]	request,
-	output[NUM_ENTRIES - 1:0]	grant_oh);
+	(input							clk,
+	input							reset,
+	input[NUM_ENTRIES - 1:0]		request,
+	output reg[NUM_ENTRIES - 1:0]	grant_oh);
 
 	reg[NUM_ENTRIES - 1:0] base;
 	wire[NUM_ENTRIES * 2 - 1:0]	double_request = { request, request };
 	wire[NUM_ENTRIES * 2 - 1:0] double_grant = double_request 
 		& ~(double_request - base);
-	assign grant_oh = double_grant[NUM_ENTRIES * 2 - 1:NUM_ENTRIES] 
-		| double_grant[NUM_ENTRIES - 1:0];
 
 	always @(posedge clk, posedge reset)
 	begin
+		grant_oh <= double_grant[NUM_ENTRIES * 2 - 1:NUM_ENTRIES] 
+			| double_grant[NUM_ENTRIES - 1:0];
 		if (reset)
 			base <= 1;
 		else if (request != 0)

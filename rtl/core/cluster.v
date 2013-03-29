@@ -29,7 +29,7 @@ module cluster(
 	output[15:0]	device_data_out,
 	input[15:0]		device_data_in);
 
-	localparam NUM_CORES = 8;
+	localparam NUM_CORES = 16;
 	localparam LOCAL_MEMORY_SIZE = 512;
 	localparam GLOBAL_MEMORY_SIZE = 1024;
 
@@ -79,6 +79,38 @@ module cluster(
 	wire shared_wren7;
 	wire shared_rden7;
 	wire[15:0] shared_write_val7;
+	wire[15:0] shared_addr8;
+	wire shared_wren8;
+	wire shared_rden8;
+	wire[15:0] shared_write_val8;
+	wire[15:0] shared_addr9;
+	wire shared_wren9;
+	wire shared_rden9;
+	wire[15:0] shared_write_val9;
+	wire[15:0] shared_addr10;
+	wire shared_wren10;
+	wire shared_rden10;
+	wire[15:0] shared_write_val10;
+	wire[15:0] shared_addr11;
+	wire shared_wren11;
+	wire shared_rden11;
+	wire[15:0] shared_write_val11;
+	wire[15:0] shared_addr12;
+	wire shared_wren12;
+	wire shared_rden12;
+	wire[15:0] shared_write_val12;
+	wire[15:0] shared_addr13;
+	wire shared_wren13;
+	wire shared_rden13;
+	wire[15:0] shared_write_val13;
+	wire[15:0] shared_addr14;
+	wire shared_wren14;
+	wire shared_rden14;
+	wire[15:0] shared_write_val14;
+	wire[15:0] shared_addr15;
+	wire shared_wren15;
+	wire shared_rden15;
+	wire[15:0] shared_write_val15;
 
 	core #(LOCAL_MEMORY_SIZE) core0(
 		.clk(clk),
@@ -159,28 +191,123 @@ module cluster(
 		.shared_ready(core_enable[7]),
 		.shared_write_val(shared_write_val7),
 		.shared_read_val(shared_read_val));
+
+	core #(LOCAL_MEMORY_SIZE) core8(
+		.clk(clk),
+		.reset(reset),
+		.shared_addr(shared_addr8),
+		.shared_wren(shared_wren8),	
+		.shared_rden(shared_rden8),
+		.shared_ready(core_enable[8]),
+		.shared_write_val(shared_write_val8),
+		.shared_read_val(shared_read_val));
+
+	core #(LOCAL_MEMORY_SIZE) core9(
+		.clk(clk),
+		.reset(reset),
+		.shared_addr(shared_addr9),
+		.shared_wren(shared_wren9),	
+		.shared_rden(shared_rden9),
+		.shared_ready(core_enable[9]),
+		.shared_write_val(shared_write_val9),
+		.shared_read_val(shared_read_val));
+
+	core #(LOCAL_MEMORY_SIZE) core10(
+		.clk(clk),
+		.reset(reset),
+		.shared_addr(shared_addr10),
+		.shared_wren(shared_wren10),	
+		.shared_rden(shared_rden10),
+		.shared_ready(core_enable[10]),
+		.shared_write_val(shared_write_val10),
+		.shared_read_val(shared_read_val));
+
+	core #(LOCAL_MEMORY_SIZE) core11(
+		.clk(clk),
+		.reset(reset),
+		.shared_addr(shared_addr11),
+		.shared_wren(shared_wren11),	
+		.shared_rden(shared_rden11),
+		.shared_ready(core_enable[11]),
+		.shared_write_val(shared_write_val11),
+		.shared_read_val(shared_read_val));
+
+	core #(LOCAL_MEMORY_SIZE) core12(
+		.clk(clk),
+		.reset(reset),
+		.shared_addr(shared_addr12),
+		.shared_wren(shared_wren12),	
+		.shared_rden(shared_rden12),
+		.shared_ready(core_enable[12]),
+		.shared_write_val(shared_write_val12),
+		.shared_read_val(shared_read_val));
+
+	core #(LOCAL_MEMORY_SIZE) core13(
+		.clk(clk),
+		.reset(reset),
+		.shared_addr(shared_addr13),
+		.shared_wren(shared_wren13),	
+		.shared_rden(shared_rden13),
+		.shared_ready(core_enable[13]),
+		.shared_write_val(shared_write_val13),
+		.shared_read_val(shared_read_val));
+
+	core #(LOCAL_MEMORY_SIZE) core14(
+		.clk(clk),
+		.reset(reset),
+		.shared_addr(shared_addr14),
+		.shared_wren(shared_wren14),	
+		.shared_rden(shared_rden14),
+		.shared_ready(core_enable[14]),
+		.shared_write_val(shared_write_val14),
+		.shared_read_val(shared_read_val));
+
+	core #(LOCAL_MEMORY_SIZE) core15(
+		.clk(clk),
+		.reset(reset),
+		.shared_addr(shared_addr15),
+		.shared_wren(shared_wren15),	
+		.shared_rden(shared_rden15),
+		.shared_ready(core_enable[15]),
+		.shared_write_val(shared_write_val15),
+		.shared_read_val(shared_read_val));
 	
 	// Request mux
 	always @*
 	begin
 		case (core_enable)
-			8'b10000000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+			16'b1000000000000000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren15, shared_rden15, shared_addr15, shared_write_val15, 4'd15 };
+			16'b0100000000000000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren14, shared_rden14, shared_addr14, shared_write_val14, 4'd14 };
+			16'b0010000000000000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren13, shared_rden13, shared_addr13, shared_write_val13, 4'd13 };
+			16'b0001000000000000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren12, shared_rden12, shared_addr12, shared_write_val12, 4'd12 };
+			16'b0000100000000000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren11, shared_rden11, shared_addr11, shared_write_val11, 4'd11 };
+			16'b0000010000000000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren10, shared_rden10, shared_addr10, shared_write_val10, 4'd10 };
+			16'b0000001000000000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren9, shared_rden9, shared_addr9, shared_write_val9, 4'd9 };
+			16'b0000000100000000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+				= { shared_wren8, shared_rden8, shared_addr8, shared_write_val8, 4'd8 };
+			16'b0000000010000000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
 				= { shared_wren7, shared_rden7, shared_addr7, shared_write_val7, 4'd7 };
-			8'b01000000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+			16'b0000000001000000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
 				= { shared_wren6, shared_rden6, shared_addr6, shared_write_val6, 4'd6 };
-			8'b00100000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+			16'b0000000000100000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
 				= { shared_wren5, shared_rden5, shared_addr5, shared_write_val5, 4'd5 };
-			8'b00010000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+			16'b0000000000010000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
 				= { shared_wren4, shared_rden4, shared_addr4, shared_write_val4, 4'd4 };
-			8'b00001000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+			16'b0000000000001000: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
 				= { shared_wren3, shared_rden3, shared_addr3, shared_write_val3, 4'd3 };
-			8'b00000100: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+			16'b0000000000000100: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
 				= { shared_wren2, shared_rden2, shared_addr2, shared_write_val2, 4'd2 };
-			8'b00000010: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
+			16'b0000000000000010: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
 				= { shared_wren1, shared_rden1, shared_addr1, shared_write_val1, 4'd1 };
 			default: { shared_wren, shared_rden, shared_addr, shared_write_val, device_core_id } 
-				= { shared_wren0, shared_rden0, shared_addr0, shared_write_val0, 4'd0 };
-
+				= { shared_wren0, shared_rden0, shared_addr0, shared_write_val0, 4'd0 };		
 		endcase
 	end
 
@@ -231,6 +358,14 @@ module cluster(
 	wire[NUM_CORES - 1:0] request;
 
 	assign request = {
+		shared_wren15 || shared_rden15,
+		shared_wren14 || shared_rden14,
+		shared_wren13 || shared_rden13,
+		shared_wren12 || shared_rden12,
+		shared_wren11 || shared_rden11,
+		shared_wren10 || shared_rden10,
+		shared_wren9 || shared_rden9,
+		shared_wren8 || shared_rden8,
 		shared_wren7 || shared_rden7,
 		shared_wren6 || shared_rden6,
 		shared_wren5 || shared_rden5,

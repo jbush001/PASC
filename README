@@ -12,7 +12,7 @@
 
 == Running in Verilog simulation =====================
 
-  1. Build the verilog model:
+  1. Build the verilog model and bootloader:
 
      cd rtl
      make
@@ -25,12 +25,5 @@
 
 == Running on FPGA (Cyclone II Starter Kit) ===============
 
-  1. Assemble the bootloader.  
-
-     cd rtl
-     make
-
-  2. Copy the assembled program into fpga/cIIstarter/program.hex.
-
-  3. Synthesize design by opening 'fpga/cIIstarter/cIIstarter.qpf'.  Note that the design needs to be resynthesized each time the program is changed.
+  1. Synthesize design by opening 'fpga/cIIstarter/cIIstarter.qpf'.  Note that the design needs to be resynthesized each time the program is changed.
 

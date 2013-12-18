@@ -1,3 +1,5 @@
+This is a simple multi-core embedded processor. There are a 16 independent RISC cores, each with a small chunk of local memory and a shared chunk of global memory.  Details are in the [wiki](https://github.com/jbush001/MultiCore/wiki).
+
 == Required software =========================
  - Python 2.7
  - Icarus Verilog (for simulation) [http://iverilog.icarus.com/]

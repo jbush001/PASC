@@ -1,4 +1,4 @@
-This is a simple multi-core embedded processor inspired by Parallax's Propeller.  There are a 16 RISC cores, each with a small chunk of local memory and a shared global memory area.  Details are in the wiki(https://github.com/jbush001/MultiCore/wiki).
+This is a simple multi-core embedded processor inspired by Parallax's Propeller.  There are a 16 RISC cores, each with a small chunk of local memory and a shared global memory area.  Details are in the wiki (https://github.com/jbush001/RotorCPU/wiki).
 
 == Required software =========================
  - Python 2.7

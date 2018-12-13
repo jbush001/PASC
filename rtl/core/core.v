@@ -21,15 +21,15 @@
 module core
 	#(parameter LOCAL_MEMORY_SIZE = 2048)
 	
-	(input clk,
-	input reset,
-	output reg[15:0] shared_addr,
-	output reg shared_wren,
-	output reg shared_rden,
-	output reg[15:0] shared_write_val,
-	input shared_ready,
-	output shared_request,
-	input[15:0] shared_read_val);
+	(input        clk,
+	input         reset,
+	output [15:0] shared_addr,
+	output        shared_wren,
+	output        shared_rden,
+	output [15:0] shared_write_val,
+	input         shared_ready,
+	output        shared_request,
+	input  [15:0] shared_read_val);
 
 	localparam LOCAL_MEM_ADDR_WIDTH = $clog2(LOCAL_MEMORY_SIZE);
 
@@ -51,34 +51,18 @@ module core
 	assign local_memory_write = dwrite_en && local_memory_select;
 
 	assign shared_request = !local_memory_select && (dwrite_en || dread_en);
-
-	// Writes to shared locations (global memory and device registers)
-	always @*
-	begin
-		if (shared_ready)
-		begin
-			// I am selected, write to shared bus
-			shared_wren = !local_memory_select && dwrite_en;
-			shared_rden = !local_memory_select && dread_en;
-			shared_addr = daddr;
-			shared_write_val = ddata_out;
-		end
-		else
-		begin
-			// Float outputs
-			shared_wren = 1'bz;
-			shared_rden = 1'bz;
-			shared_addr = 16'bzzzzzzzzzzzzzzzz;
-			shared_write_val = 16'bzzzzzzzzzzzzzzzz;
-		end
-	end
+	
+	assign shared_wren = !local_memory_select && dwrite_en;
+    assign shared_rden = !local_memory_select && dread_en;
+    assign shared_addr = daddr;
+    assign shared_write_val = ddata_out;
 
 	// This is delayed by one cycle
 	assign data_to_pipeline = local_memory_select_l ? local_mem_q : shared_read_val;
 
 	// The first 16 words in the local address space are a small boot ROM.
 	// This is emulated by initializing memory with that program (coreboot.hex)
-	dpsram #(LOCAL_MEMORY_SIZE, 16, LOCAL_MEM_ADDR_WIDTH, 1, "coreboot.hex") local_memory(
+	dpsram #(LOCAL_MEMORY_SIZE, 16, LOCAL_MEM_ADDR_WIDTH, 1, "/home/manili/MyProjects/ip_repo/PASC_1.0/src/hex/coreboot.hex") local_memory(
 		.clk(clk),
 		// Instruction Port
 		.addr_a(iaddr[LOCAL_MEM_ADDR_WIDTH - 1:0]),	

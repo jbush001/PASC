@@ -14,10 +14,12 @@
 // limitations under the License.
 // 
 
-module top(
-	input 				clk,
-	output reg[15:0] 	output_val,
-	output reg			output_enable);
+module top
+   #(parameter NUM_CORES = 16)
+    (input 				clk,
+    output reg			output_enable,
+	output reg [$clog2(NUM_CORES) - 1:0] output_core_id,
+	output reg [15:0] 	output_data_val);
 	
 	reg reset;
 	wire[3:0] device_core_id;
@@ -27,7 +29,7 @@ module top(
 	wire[15:0] device_data_out;
 	reg[15:0] device_data_in;
 
-	cluster cluster(
+	cluster #(.NUM_CORES(NUM_CORES)) cluster(
 		.clk(clk),
 		.reset(reset),
 		.device_core_id(device_core_id),
@@ -66,16 +68,18 @@ module top(
 			sem_held0 <= 0;
 			sem_holder1 <= 0;
 			sem_held1 <= 0;
-			output_val <= 0;
 			output_enable <= 0;
+			output_core_id <= 0;
+			output_data_val <= 0;
 		end
 		else
 		begin
 			// Output
 			if (device_addr == 'h3ff && device_write_en)
 			begin
-				output_val <= device_data_out;
-				output_enable <= 1;
+			    output_enable <= 1;
+			    output_core_id <= device_core_id;
+				output_data_val <= device_data_out;
 			end
 			else
 				output_enable <= 0;

@@ -23,7 +23,7 @@
 
 module cluster
     #(parameter NUM_CORES = 16)
-
+    
     (input          clk,
     input           reset,
     input[15:0]     device_data_in,

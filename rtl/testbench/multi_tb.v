@@ -20,12 +20,12 @@ module multi_tb;
 	wire[15:0] value_out;
 	wire has_output_value;
 	reg[1000:0] filename;
-	wire[15:0] output_val;
+	wire[15:0] output_data_val;
 	wire output_enable;
 
 	top top(
 		.clk(clk),
-		.output_val(output_val),
+		.output_data_val(output_data_val),
 		.output_enable(output_enable));
 
 	integer i;
@@ -47,7 +47,7 @@ module multi_tb;
 		begin
 			#5 clk = 0;
 			if (output_enable)
-				$display("output %04x", output_val);
+				$display("output %04x", output_data_val);
 			
 			#5 clk = 1;
 		end

@@ -15,7 +15,8 @@
 // 
 
 module top
-   #(parameter NUM_CORES = 16)
+    #(parameter NUM_CORES = 16)
+
     (input              clk,
     output reg          output_enable,
     output reg [$clog2(NUM_CORES) - 1:0] output_core_id,

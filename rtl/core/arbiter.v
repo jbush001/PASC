@@ -30,34 +30,34 @@
 //
 
 module arbiter
-	#(parameter NUM_ENTRIES = 4)
+    #(parameter NUM_ENTRIES = 4)
 
-	(input							clk,
-	input							reset,
-	input[NUM_ENTRIES - 1:0]		request,
-	output reg[NUM_ENTRIES - 1:0]	grant_oh);
+    (input                          clk,
+    input                           reset,
+    input[NUM_ENTRIES - 1:0]        request,
+    output reg[NUM_ENTRIES - 1:0]   grant_oh);
 
-	reg[NUM_ENTRIES - 1:0] base;
-	wire[NUM_ENTRIES * 2 - 1:0] double_request = { request, request };
-	wire[NUM_ENTRIES * 2 - 1:0] double_grant = double_request 
-		& ~(double_request - base);
-	wire[NUM_ENTRIES - 1:0] grant_nxt = double_grant[NUM_ENTRIES * 2 - 1:NUM_ENTRIES] 
-		| double_grant[NUM_ENTRIES - 1:0];
+    reg[NUM_ENTRIES - 1:0] base;
+    wire[NUM_ENTRIES * 2 - 1:0] double_request = { request, request };
+    wire[NUM_ENTRIES * 2 - 1:0] double_grant = double_request 
+        & ~(double_request - base);
+    wire[NUM_ENTRIES - 1:0] grant_nxt = double_grant[NUM_ENTRIES * 2 - 1:NUM_ENTRIES] 
+        | double_grant[NUM_ENTRIES - 1:0];
 
-	always @(posedge clk, posedge reset)
-	begin
-		if (reset)
-		begin
-			base <= 1;
-			grant_oh <= 0;
-		end
-		else 
-		begin
-			if (grant_nxt != 0)
-				base <= { grant_nxt[NUM_ENTRIES - 2:0], grant_nxt[NUM_ENTRIES - 1] }; // Rotate left
+    always @(posedge clk, posedge reset)
+    begin
+        if (reset)
+        begin
+            base <= 1;
+            grant_oh <= 0;
+        end
+        else 
+        begin
+            if (grant_nxt != 0)
+                base <= { grant_nxt[NUM_ENTRIES - 2:0], grant_nxt[NUM_ENTRIES - 1] }; // Rotate left
 
-			grant_oh <= grant_nxt;
-		end
-	end
+            grant_oh <= grant_nxt;
+        end
+    end
 endmodule
 

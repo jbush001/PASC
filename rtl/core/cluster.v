@@ -19,47 +19,50 @@
 // between them.
 //
 
+`include "config.v"
+
 module cluster
-   #(parameter NUM_CORES = 16)
-	(input 			clk,
-	input			reset,
-	input[15:0]		device_data_in,
-	output			device_write_en,
-	output			device_read_en,
-	output[9:0]		device_addr,
-	output[15:0]	device_data_out,
-	output reg [$clog2(NUM_CORES) - 1:0] device_core_id);
-	
-	localparam LOCAL_MEMORY_SIZE = 512;
-	localparam GLOBAL_MEMORY_SIZE = 1024;
-	
-	wire[15:0] shared_addr;
-	wire[15:0] shared_addr_tmp [0:NUM_CORES-1];
-	
-	wire[15:0] shared_read_val;
-	
-	wire shared_wren;
-	wire shared_wren_tmp [NUM_CORES-1:0];
-	
-	wire shared_rden;
-	wire shared_rden_tmp [NUM_CORES-1:0];
-	
-	wire[15:0] shared_write_val;
-	wire[15:0] shared_write_val_tmp[0:NUM_CORES-1];
-	
-	wire[15:0] global_mem_q;
-	wire device_memory_select;
-	reg device_memory_select_l;
-	wire global_mem_write;
-	wire[NUM_CORES-1:0] core_enable;
-	wire[NUM_CORES-1:0] core_request;
-	
-	assign shared_wren = shared_wren_tmp[device_core_id];
+    #(parameter NUM_CORES = 16)
+
+    (input          clk,
+    input           reset,
+    input[15:0]     device_data_in,
+    output          device_write_en,
+    output          device_read_en,
+    output[9:0]     device_addr,
+    output[15:0]    device_data_out,
+    output reg [$clog2(NUM_CORES) - 1:0] device_core_id);
+    
+    localparam LOCAL_MEMORY_SIZE = 512;
+    localparam GLOBAL_MEMORY_SIZE = 1024;
+    
+    wire[15:0] shared_addr;
+    wire[15:0] shared_addr_tmp [0:NUM_CORES-1];
+    
+    wire[15:0] shared_read_val;
+    
+    wire shared_wren;
+    wire shared_wren_tmp [NUM_CORES-1:0];
+    
+    wire shared_rden;
+    wire shared_rden_tmp [NUM_CORES-1:0];
+    
+    wire[15:0] shared_write_val;
+    wire[15:0] shared_write_val_tmp[0:NUM_CORES-1];
+    
+    wire[15:0] global_mem_q;
+    wire device_memory_select;
+    reg device_memory_select_l;
+    wire global_mem_write;
+    wire[NUM_CORES-1:0] core_enable;
+    wire[NUM_CORES-1:0] core_request;
+    
+    assign shared_wren = shared_wren_tmp[device_core_id];
     assign shared_rden = shared_rden_tmp[device_core_id];
     assign shared_addr = shared_addr_tmp[device_core_id];
     assign shared_write_val = shared_write_val_tmp[device_core_id];
 
-	genvar i;
+    genvar i;
     generate
         for (i = 0; i < NUM_CORES; i = i + 1)
         begin: core
@@ -76,17 +79,17 @@ module cluster
         end
     endgenerate
 
-	assign device_memory_select = shared_addr[15:10] == 6'b111111;
-	assign device_addr = shared_addr[9:0];
-	assign global_mem_write = !device_memory_select && shared_wren;
-	assign shared_read_val = device_memory_select_l ? device_data_in : global_mem_q;
-	assign device_write_en = device_memory_select && shared_wren; 
-	assign device_read_en = device_memory_select && shared_rden;
-	assign device_data_out = shared_write_val;
+    assign device_memory_select = shared_addr[15:10] == 6'b111111;
+    assign device_addr = shared_addr[9:0];
+    assign global_mem_write = !device_memory_select && shared_wren;
+    assign shared_read_val = device_memory_select_l ? device_data_in : global_mem_q;
+    assign device_write_en = device_memory_select && shared_wren; 
+    assign device_read_en = device_memory_select && shared_rden;
+    assign device_data_out = shared_write_val;
 
-	localparam GMEM_ADDR_WIDTH = $clog2(GLOBAL_MEMORY_SIZE);
+    localparam GMEM_ADDR_WIDTH = $clog2(GLOBAL_MEMORY_SIZE);
 
-	// Convert one-hot to binary
+    // Convert one-hot to binary
     integer oh_index;
     always @*
     begin : convert
@@ -101,46 +104,44 @@ module cluster
         end
     end
 
-`define FEATURE_FPGA
-
-	spsram 
+    spsram 
 `ifdef FEATURE_FPGA
-	#(GLOBAL_MEMORY_SIZE, 16, GMEM_ADDR_WIDTH, 1, "/home/manili/MyProjects/ip_repo/PASC_1.0/src/hex/bubble-sort.hex") 
+    #(GLOBAL_MEMORY_SIZE, 16, GMEM_ADDR_WIDTH, 1, `PROGRAM_PATH) 
 `else
-	#(GLOBAL_MEMORY_SIZE, 16, GMEM_ADDR_WIDTH) 
+    #(GLOBAL_MEMORY_SIZE, 16, GMEM_ADDR_WIDTH) 
 `endif
-	global_memory(
-		.clk(clk),
-		.addr_a(shared_addr[GMEM_ADDR_WIDTH - 1:0]),
-		.q_a(global_mem_q),
-		.we_a(global_mem_write),
-		.data_a(shared_write_val));
+    global_memory(
+        .clk(clk),
+        .addr_a(shared_addr[GMEM_ADDR_WIDTH - 1:0]),
+        .q_a(global_mem_q),
+        .we_a(global_mem_write),
+        .data_a(shared_write_val));
 
-	always @(posedge reset, posedge clk)
-	begin
-		if (reset)
-			device_memory_select_l <= 0;
-		else 
-			device_memory_select_l <= device_memory_select;
-	end
+    always @(posedge reset, posedge clk)
+    begin
+        if (reset)
+            device_memory_select_l <= 0;
+        else 
+            device_memory_select_l <= device_memory_select;
+    end
 
 `ifdef STATIC_ARBITRATION
-	reg[NUM_CORES - 1:0] core_enable_ff;
-	
-	assign core_enable = core_enable_ff;
+    reg[NUM_CORES - 1:0] core_enable_ff;
+    
+    assign core_enable = core_enable_ff;
 
-	always @(posedge reset, posedge clk)
-	begin
-		if (reset)
-			core_enable_ff <= {{NUM_CORES - 1{1'b0}}, 1'b1};
-		else 
-			core_enable_ff = { core_enable_ff[NUM_CORES - 2:0], core_enable_ff[NUM_CORES - 1] };
-	end
+    always @(posedge reset, posedge clk)
+    begin
+        if (reset)
+            core_enable_ff <= {{NUM_CORES - 1{1'b0}}, 1'b1};
+        else 
+            core_enable_ff = { core_enable_ff[NUM_CORES - 2:0], core_enable_ff[NUM_CORES - 1] };
+    end
 `else
-	arbiter #(NUM_CORES) global_mem_arbiter(
-		.clk(clk),
-		.reset(reset),
-		.request(core_request),
-		.grant_oh(core_enable));
+    arbiter #(NUM_CORES) global_mem_arbiter(
+        .clk(clk),
+        .reset(reset),
+        .request(core_request),
+        .grant_oh(core_enable));
 `endif
 endmodule

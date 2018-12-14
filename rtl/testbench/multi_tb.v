@@ -16,41 +16,41 @@
 
 module multi_tb;
 
-	reg clk = 0;
-	wire[15:0] value_out;
-	wire has_output_value;
-	reg[1000:0] filename;
-	wire[15:0] output_data_val;
-	wire output_enable;
+    reg clk = 0;
+    wire[15:0] value_out;
+    wire has_output_value;
+    reg[1000:0] filename;
+    wire[15:0] output_data_val;
+    wire output_enable;
 
-	top top(
-		.clk(clk),
-		.output_data_val(output_data_val),
-		.output_enable(output_enable));
+    top top(
+        .clk(clk),
+        .output_data_val(output_data_val),
+        .output_enable(output_enable));
 
-	integer i;
+    integer i;
 
-	initial
-	begin
-		if ($value$plusargs("bin=%s", filename))
-			$readmemh(filename, top.cluster.global_memory.data);
-		else
-		begin
-			$display("error opening memory image");
-			$finish;
-		end
+    initial
+    begin
+        if ($value$plusargs("bin=%s", filename))
+            $readmemh(filename, top.cluster.global_memory.data);
+        else
+        begin
+            $display("error opening memory image");
+            $finish;
+        end
 
-		$dumpfile("trace.lxt");
-		$dumpvars;
+        $dumpfile("trace.lxt");
+        $dumpvars;
 
-		for (i = 0; i < 2000; i = i + 1)
-		begin
-			#5 clk = 0;
-			if (output_enable)
-				$display("output %04x", output_data_val);
-			
-			#5 clk = 1;
-		end
-	end
+        for (i = 0; i < 2000; i = i + 1)
+        begin
+            #5 clk = 0;
+            if (output_enable)
+                $display("output %04x", output_data_val);
+            
+            #5 clk = 1;
+        end
+    end
 
 endmodule

@@ -23,7 +23,7 @@
 
 module cluster
     #(parameter NUM_CORES = 16)
-    
+
     (input          clk,
     input           reset,
     input[15:0]     device_data_in,
@@ -36,19 +36,19 @@ module cluster
     localparam LOCAL_MEMORY_SIZE = 512;
     localparam GLOBAL_MEMORY_SIZE = 1024;
     
-    wire[15:0] shared_addr;
-    wire[15:0] shared_addr_tmp [0:NUM_CORES-1];
+    wire[15:0] memory_addr;
+    wire[15:0] core_memory_addr [0:NUM_CORES-1];
     
-    wire[15:0] shared_read_val;
+    wire[15:0] memory_read_val;
     
-    wire shared_wren;
-    wire shared_wren_tmp [NUM_CORES-1:0];
+    wire memory_wren;
+    wire core_memory_wren [NUM_CORES-1:0];
     
-    wire shared_rden;
-    wire shared_rden_tmp [NUM_CORES-1:0];
+    wire memory_rden;
+    wire core_memory_rden [NUM_CORES-1:0];
     
-    wire[15:0] shared_write_val;
-    wire[15:0] shared_write_val_tmp[0:NUM_CORES-1];
+    wire[15:0] memory_write_val;
+    wire[15:0] core_memory_write_val[0:NUM_CORES-1];
     
     wire[15:0] global_mem_q;
     wire device_memory_select;
@@ -57,10 +57,10 @@ module cluster
     wire[NUM_CORES-1:0] core_enable;
     wire[NUM_CORES-1:0] core_request;
     
-    assign shared_wren = shared_wren_tmp[device_core_id];
-    assign shared_rden = shared_rden_tmp[device_core_id];
-    assign shared_addr = shared_addr_tmp[device_core_id];
-    assign shared_write_val = shared_write_val_tmp[device_core_id];
+    assign memory_wren = core_memory_wren[device_core_id];
+    assign memory_rden = core_memory_rden[device_core_id];
+    assign memory_addr = core_memory_addr[device_core_id];
+    assign memory_write_val = core_memory_write_val[device_core_id];
 
     genvar i;
     generate
@@ -69,23 +69,23 @@ module cluster
             core #(LOCAL_MEMORY_SIZE) inst (
                 .clk(clk),
                 .reset(reset),
-                .shared_ready(core_enable[i]),
-                .shared_request(core_request[i]),
-                .shared_addr(shared_addr_tmp[i]),
-                .shared_wren(shared_wren_tmp[i]),    
-                .shared_rden(shared_rden_tmp[i]),
-                .shared_write_val(shared_write_val_tmp[i]),
-                .shared_read_val(shared_read_val));
+                .core_enable(core_enable[i]),
+                .core_request(core_request[i]),
+                .memory_addr(core_memory_addr[i]),
+                .memory_wren(core_memory_wren[i]),    
+                .memory_rden(core_memory_rden[i]),
+                .memory_write_val(core_memory_write_val[i]),
+                .memory_read_val(memory_read_val));
         end
     endgenerate
 
-    assign device_memory_select = shared_addr[15:10] == 6'b111111;
-    assign device_addr = shared_addr[9:0];
-    assign global_mem_write = !device_memory_select && shared_wren;
-    assign shared_read_val = device_memory_select_l ? device_data_in : global_mem_q;
-    assign device_write_en = device_memory_select && shared_wren; 
-    assign device_read_en = device_memory_select && shared_rden;
-    assign device_data_out = shared_write_val;
+    assign device_memory_select = memory_addr[15:10] == 6'b111111;
+    assign device_addr = memory_addr[9:0];
+    assign global_mem_write = !device_memory_select && memory_wren;
+    assign memory_read_val = device_memory_select_l ? device_data_in : global_mem_q;
+    assign device_write_en = device_memory_select && memory_wren; 
+    assign device_read_en = device_memory_select && memory_rden;
+    assign device_data_out = memory_write_val;
 
     localparam GMEM_ADDR_WIDTH = $clog2(GLOBAL_MEMORY_SIZE);
 
@@ -112,10 +112,10 @@ module cluster
 `endif
     global_memory(
         .clk(clk),
-        .addr_a(shared_addr[GMEM_ADDR_WIDTH - 1:0]),
+        .addr_a(memory_addr[GMEM_ADDR_WIDTH - 1:0]),
         .q_a(global_mem_q),
         .we_a(global_mem_write),
-        .data_a(shared_write_val));
+        .data_a(memory_write_val));
 
     always @(posedge reset, posedge clk)
     begin

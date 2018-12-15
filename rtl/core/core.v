@@ -25,13 +25,13 @@ module core
     
     (input        clk,
     input         reset,
-    output [15:0] shared_addr,
-    output        shared_wren,
-    output        shared_rden,
-    output [15:0] shared_write_val,
-    input         shared_ready,
-    output        shared_request,
-    input  [15:0] shared_read_val);
+    input         core_enable,
+    output        core_request,
+    output [15:0] memory_addr,
+    output        memory_wren,
+    output        memory_rden,
+    output [15:0] memory_write_val,
+    input  [15:0] memory_read_val);
 
     localparam LOCAL_MEM_ADDR_WIDTH = $clog2(LOCAL_MEMORY_SIZE);
 
@@ -52,15 +52,15 @@ module core
     assign local_memory_select = daddr[15:14] == 2'b00; // Bottom 16k words
     assign local_memory_write = dwrite_en && local_memory_select;
 
-    assign shared_request = !local_memory_select && (dwrite_en || dread_en);
+    assign core_request = !local_memory_select && (dwrite_en || dread_en);
     
-    assign shared_wren = !local_memory_select && dwrite_en;
-    assign shared_rden = !local_memory_select && dread_en;
-    assign shared_addr = daddr;
-    assign shared_write_val = ddata_out;
+    assign memory_wren = !local_memory_select && dwrite_en;
+    assign memory_rden = !local_memory_select && dread_en;
+    assign memory_addr = daddr;
+    assign memory_write_val = ddata_out;
 
     // This is delayed by one cycle
-    assign data_to_pipeline = local_memory_select_l ? local_mem_q : shared_read_val;
+    assign data_to_pipeline = local_memory_select_l ? local_mem_q : memory_read_val;
 
     // The first 16 words in the local address space are a small boot ROM.
     // This is emulated by initializing memory with that program (coreboot.hex)
@@ -83,7 +83,7 @@ module core
         .we_b(local_memory_write),
         .data_b(ddata_out));
 
-    assign stall_pipeline = !shared_ready && (dread_en || dwrite_en) 
+    assign stall_pipeline = !core_enable && (dread_en || dwrite_en) 
         && !local_memory_select;
 
     pipeline pipeline(

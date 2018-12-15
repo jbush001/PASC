@@ -14,115 +14,120 @@
 // limitations under the License.
 // 
 
-module top(
-	input 				clk,
-	output reg[15:0] 	output_val,
-	output reg			output_enable);
-	
-	reg reset;
-	wire[3:0] device_core_id;
-	wire device_write_en;
-	wire device_read_en;
-	wire[9:0] device_addr;
-	wire[15:0] device_data_out;
-	reg[15:0] device_data_in;
+module top
+    #(parameter NUM_CORES = 16)
 
-	cluster cluster(
-		.clk(clk),
-		.reset(reset),
-		.device_core_id(device_core_id),
-		.device_write_en(device_write_en),
-		.device_read_en(device_read_en),
-		.device_addr(device_addr),
-		.device_data_out(device_data_out),
-		.device_data_in(device_data_in));
+    (input              clk,
+    output reg          output_enable,
+    output reg [$clog2(NUM_CORES) - 1:0] output_core_id,
+    output reg [15:0]   output_data_val);
+    
+    reg reset;
+    wire[3:0] device_core_id;
+    wire device_write_en;
+    wire device_read_en;
+    wire[9:0] device_addr;
+    wire[15:0] device_data_out;
+    reg[15:0] device_data_in;
 
-	reg[3:0] sem_holder0;
-	reg sem_held0;
-	reg[3:0] sem_holder1;
-	reg sem_held1;
-	reg[7:0] reset_count;
+    cluster #(.NUM_CORES(NUM_CORES)) cluster(
+        .clk(clk),
+        .reset(reset),
+        .device_core_id(device_core_id),
+        .device_write_en(device_write_en),
+        .device_read_en(device_read_en),
+        .device_addr(device_addr),
+        .device_data_out(device_data_out),
+        .device_data_in(device_data_in));
 
-	initial
-	begin
-		reset = 1;	// FPGA initialization
-		reset_count = 0;
-	end
+    reg[3:0] sem_holder0;
+    reg sem_held0;
+    reg[3:0] sem_holder1;
+    reg sem_held1;
+    reg[7:0] reset_count;
 
-	always @(posedge clk)
-	begin
-		// Release reset after 8 clock cycles.
-		reset_count <= { reset_count[6:0], 1'b1 };
-		if (reset_count == 8'b11111111)
-			reset <= 0;
-	end
+    initial
+    begin
+        reset = 1;  // FPGA initialization
+        reset_count = 0;
+    end
 
-	always @(posedge clk, posedge reset)
-	begin
-		if (reset)
-		begin
-			device_data_in <= 0;
-			sem_holder0 <= 0;
-			sem_held0 <= 0;
-			sem_holder1 <= 0;
-			sem_held1 <= 0;
-			output_val <= 0;
-			output_enable <= 0;
-		end
-		else
-		begin
-			// Output
-			if (device_addr == 'h3ff && device_write_en)
-			begin
-				output_val <= device_data_out;
-				output_enable <= 1;
-			end
-			else
-				output_enable <= 0;
-		
-			case (device_addr)
-				// Mutex 0
-				'h3fe: 
-				begin
-					if (device_write_en)
-					begin
-						if (device_data_out == 0 && sem_holder0 == device_core_id)
-							sem_held0 <= 0;	// Release mutex
-						else if (device_data_out && !sem_held0)
-						begin
-							// Acquire mutex
-							sem_held0 <= 1;
-							sem_holder0 <= device_core_id;
-						end
-					end
-					else
-					begin
-						// Check if mutex is held
-						device_data_in <= sem_held0 && sem_holder0 == device_core_id;
-					end
-				end
+    always @(posedge clk)
+    begin
+        // Release reset after 8 clock cycles.
+        reset_count <= { reset_count[6:0], 1'b1 };
+        if (reset_count == 8'b11111111)
+            reset <= 0;
+    end
 
-				// Mutex 1
-				'h3fd: 
-				begin
-					if (device_write_en)
-					begin
-						if (device_data_out == 0 && sem_holder1 == device_core_id)
-							sem_held1 <= 0;	// Release mutex
-						else if (device_data_out && !sem_held1)
-						begin
-							// Acquire mutex
-							sem_held1 <= 1;
-							sem_holder1 <= device_core_id;
-						end
-					end
-					else
-					begin
-						// Check if mutex is held
-						device_data_in <= sem_held1 && sem_holder1 == device_core_id;
-					end
-				end
-			endcase
-		end
-	end
+    always @(posedge clk, posedge reset)
+    begin
+        if (reset)
+        begin
+            device_data_in <= 0;
+            sem_holder0 <= 0;
+            sem_held0 <= 0;
+            sem_holder1 <= 0;
+            sem_held1 <= 0;
+            output_enable <= 0;
+            output_core_id <= 0;
+            output_data_val <= 0;
+        end
+        else
+        begin
+            // Output
+            if (device_addr == 'h3ff && device_write_en)
+            begin
+                output_enable <= 1;
+                output_core_id <= device_core_id;
+                output_data_val <= device_data_out;
+            end
+            else
+                output_enable <= 0;
+        
+            case (device_addr)
+                // Mutex 0
+                'h3fe: 
+                begin
+                    if (device_write_en)
+                    begin
+                        if (device_data_out == 0 && sem_holder0 == device_core_id)
+                            sem_held0 <= 0; // Release mutex
+                        else if (device_data_out && !sem_held0)
+                        begin
+                            // Acquire mutex
+                            sem_held0 <= 1;
+                            sem_holder0 <= device_core_id;
+                        end
+                    end
+                    else
+                    begin
+                        // Check if mutex is held
+                        device_data_in <= sem_held0 && sem_holder0 == device_core_id;
+                    end
+                end
+
+                // Mutex 1
+                'h3fd: 
+                begin
+                    if (device_write_en)
+                    begin
+                        if (device_data_out == 0 && sem_holder1 == device_core_id)
+                            sem_held1 <= 0; // Release mutex
+                        else if (device_data_out && !sem_held1)
+                        begin
+                            // Acquire mutex
+                            sem_held1 <= 1;
+                            sem_holder1 <= device_core_id;
+                        end
+                    end
+                    else
+                    begin
+                        // Check if mutex is held
+                        device_data_in <= sem_held1 && sem_holder1 == device_core_id;
+                    end
+                end
+            endcase
+        end
+    end
 endmodule

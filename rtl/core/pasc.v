@@ -14,23 +14,29 @@
 // limitations under the License.
 // 
 
-module top
-    #(parameter NUM_CORES = 16)
+module pasc
+    #(parameter NUM_CORES = 16,
+    parameter GLOBAL_MEMORY_SIZE = 1024)
 
     (input              clk,
     output reg          output_enable,
     output reg [$clog2(NUM_CORES) - 1:0] output_core_id,
-    output reg [15:0]   output_data_val);
+    output reg [15:0]   output_data_val,
+
+    input               axi_we,
+    input  [15:0]       axi_addr,
+    input  [15:0]       axi_data,
+    output [15:0]       axi_q);
     
     reg reset;
-    wire[3:0] device_core_id;
+    wire[$clog2(NUM_CORES) - 1:0] device_core_id;
     wire device_write_en;
     wire device_read_en;
     wire[9:0] device_addr;
     wire[15:0] device_data_out;
     reg[15:0] device_data_in;
 
-    cluster #(.NUM_CORES(NUM_CORES)) cluster(
+    cluster #(.NUM_CORES(NUM_CORES), .GLOBAL_MEMORY_SIZE(GLOBAL_MEMORY_SIZE)) cluster(
         .clk(clk),
         .reset(reset),
         .device_core_id(device_core_id),
@@ -38,11 +44,15 @@ module top
         .device_read_en(device_read_en),
         .device_addr(device_addr),
         .device_data_out(device_data_out),
-        .device_data_in(device_data_in));
+        .device_data_in(device_data_in),
+        .axi_we(axi_we),
+        .axi_addr(axi_addr),
+        .axi_data(axi_data),
+        .axi_q(axi_q));
 
-    reg[3:0] sem_holder0;
+    reg[$clog2(NUM_CORES) - 1:0] sem_holder0;
     reg sem_held0;
-    reg[3:0] sem_holder1;
+    reg[$clog2(NUM_CORES) - 1:0] sem_holder1;
     reg sem_held1;
     reg[7:0] reset_count;
 
@@ -54,8 +64,10 @@ module top
 
     always @(posedge clk)
     begin
-        // Release reset after 8 clock cycles.
-        reset_count <= { reset_count[6:0], 1'b1 };
+        // Release reset after 8 clock cycles if there was no AXI write request.
+        reset <= axi_we ? 1'h1 : reset;
+        reset_count <= axi_we ? 1'b0 : { reset_count[6:0], 1'b1 };
+        
         if (reset_count == 8'b11111111)
             reset <= 0;
     end

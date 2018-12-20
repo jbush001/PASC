@@ -16,24 +16,37 @@
 
 module multi_tb;
 
-    reg clk = 0;
-    wire[15:0] value_out;
-    wire has_output_value;
-    reg[1000:0] filename;
-    wire[15:0] output_data_val;
     wire output_enable;
+    wire[3:0] output_core_id;
+    wire[15:0] output_data_val;
+    wire axi_we;
+    wire[15:0] axi_addr;
+    wire[15:0] axi_data;
+    wire[15:0] axi_q;
 
-    top top(
+    reg clk = 0;
+    reg[1000:0] filename;
+
+    assign axi_we = 1'h0;
+    assign axi_addr = 16'h0;
+    assign axi_data = 16'h0;
+
+    pasc pasc(
         .clk(clk),
+        .output_enable(output_enable),
+        .output_core_id(output_core_id),
         .output_data_val(output_data_val),
-        .output_enable(output_enable));
+        .axi_we(axi_we),
+        .axi_addr(axi_addr),
+        .axi_data(axi_data),
+        .axi_q(axi_q));
 
     integer i;
 
     initial
     begin
         if ($value$plusargs("bin=%s", filename))
-            $readmemh(filename, top.cluster.global_memory.data);
+            $readmemh(filename, pasc.cluster.global_memory.data);
         else
         begin
             $display("error opening memory image");

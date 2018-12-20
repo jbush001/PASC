@@ -15,7 +15,7 @@
 # 
 
 RTL_SOURCES=core/dpsram.v \
-	core/pipeline.v	\
+	core/pipeline.v \
 	core/core.v \
 	core/cluster.v \
 	core/spsram.v \

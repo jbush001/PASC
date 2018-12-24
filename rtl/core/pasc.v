@@ -15,8 +15,7 @@
 // 
 
 module pasc
-    #(parameter NUM_CORES = 16,
-    parameter GLOBAL_MEMORY_SIZE = 1024)
+    #(parameter NUM_CORES = 16)
 
     (input              clk,
     output reg          output_enable,
@@ -36,7 +35,7 @@ module pasc
     wire[15:0] device_data_out;
     reg[15:0] device_data_in;
 
-    cluster #(.NUM_CORES(NUM_CORES), .GLOBAL_MEMORY_SIZE(GLOBAL_MEMORY_SIZE)) cluster(
+    cluster #(.NUM_CORES(NUM_CORES)) cluster(
         .clk(clk),
         .reset(reset),
         .device_core_id(device_core_id),

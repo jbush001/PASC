@@ -14,13 +14,15 @@
 # limitations under the License.
 # 
 
-SOURCES=bubble-sort \
-	blinky
+SOURCES=blinky \
+	bubble-sort \
+	bubble-sort-memory
+	
 
 ASSEMBLE=../tools/assemble.py
 
 AXI_TEST_GEN=./axi-test-gen.py
-ADDRS_TO_PRINT=4100 4101 4102
+ADDRS_TO_PRINT=4100 4101 4102 4103 4104 4105 4106 4107 4108 4109 410A 410B 410C 410D 410E 410F
 
 all: axi-test-file
 

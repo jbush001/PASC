@@ -1,367 +1,219 @@
-// 
-// Copyright 2013 Jeff Bush
-// 
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-// 
-//     http://www.apache.org/licenses/LICENSE-2.0
-// 
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// 
+/*
+Distributed under the MIT license.
+Copyright (c) 2017 Dave McCoy (dave.mccoy@cospandesign.com)
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+/*
+ * Author: David McCoy (dave.mccoy@cospandesign.com)
+ * Description: An AXI Lite Slave interface that simplifies register access
+ *  XXX: Currently there is no strobe level access
+ *
+ * Changes:
+ *  3/24/2017: Initial Commit
+ */
+
+`include "axi_defines.v"
 
 module axi_slave
-    #(// Users to add parameters here
-    parameter integer NUM_CORES = 16,
-    parameter integer MEMORY_MAP_SIZE = 64 * 1024, //64K
-    // User parameters ends
-    // Do not modify the parameters beyond this line
+    #(parameter DATA_WIDTH              = 32,
+    parameter   MEMORY_MAP_SIZE         = 64 * 1024,
+    parameter   STROBE_WIDTH            = (DATA_WIDTH / 8),
+    parameter   AXI_ADDR_WIDTH          = $clog2(MEMORY_MAP_SIZE * 4),
+    parameter   SLV_ADDR_WIDTH          = AXI_ADDR_WIDTH - $clog2(STROBE_WIDTH))
+    
+    (input                              s_axi_aclk,
+    input                               s_axi_aresetn,
 
-    // Width of S_AXI data bus
-    parameter integer C_S_AXI_DATA_WIDTH    = 32,
-    // Width of S_AXI address bus
-    //Needs 18 bits for full MEMORY_MAP addressing
-    parameter integer C_S_AXI_ADDR_WIDTH    = $clog2(MEMORY_MAP_SIZE * 4))
+    //Write Address Channel
+    input                               s_axi_awvalid,
+    input       [AXI_ADDR_WIDTH - 1: 0] s_axi_awaddr,
+    output  reg                         s_axi_awready,
 
-    (// Users to add ports here
+    //Write Data Channel
+    input                               s_axi_wvalid,
+    input       [2:0]                   s_axi_awprot,
+    input       [STROBE_WIDTH - 1:0]    s_axi_wstrb,
+    input       [DATA_WIDTH - 1: 0]     s_axi_wdata,
+    output  reg                         s_axi_wready,
 
-    // User ports ends
-    // Do not modify the ports beyond this line
+    //Write Response Channel
+    input                               s_axi_bready,
+    output  reg                         s_axi_bvalid,
+    output  reg [1:0]                   s_axi_bresp,
 
-    // Global Clock Signal
-    input wire  S_AXI_ACLK,
-    // Global Reset Signal. This Signal is Active LOW
-    input wire  S_AXI_ARESETN,
-    // Write address (issued by master, acceped by Slave)
-    input wire [C_S_AXI_ADDR_WIDTH-1 : 0] S_AXI_AWADDR,
-    // Write channel Protection type. This signal indicates the
-    // privilege and security level of the transaction, and whether
-    // the transaction is a data access or an instruction access.
-    input wire [2 : 0] S_AXI_AWPROT,
-    // Write address valid. This signal indicates that the master signaling
-    // valid write address and control information.
-    input wire  S_AXI_AWVALID,
-    // Write address ready. This signal indicates that the slave is ready
-    // to accept an address and associated control signals.
-    output wire  S_AXI_AWREADY,
-    // Write data (issued by master, acceped by Slave) 
-    input wire [C_S_AXI_DATA_WIDTH-1 : 0] S_AXI_WDATA,
-    // Write strobes. This signal indicates which byte lanes hold
-    // valid data. There is one write strobe bit for each eight
-    // bits of the write data bus.    
-    input wire [(C_S_AXI_DATA_WIDTH/8)-1 : 0] S_AXI_WSTRB,
-    // Write valid. This signal indicates that valid write
-    // data and strobes are available.
-    input wire  S_AXI_WVALID,
-    // Write ready. This signal indicates that the slave
-    // can accept the write data.
-    output wire  S_AXI_WREADY,
-    // Write response. This signal indicates the status
-    // of the write transaction.
-    output wire [1 : 0] S_AXI_BRESP,
-    // Write response valid. This signal indicates that the channel
-    // is signaling a valid write response.
-    output wire  S_AXI_BVALID,
-    // Response ready. This signal indicates that the master
-    // can accept a write response.
-    input wire  S_AXI_BREADY,
-    // Read address (issued by master, acceped by Slave)
-    input wire [C_S_AXI_ADDR_WIDTH-1 : 0] S_AXI_ARADDR,
-    // Protection type. This signal indicates the privilege
-    // and security level of the transaction, and whether the
-    // transaction is a data access or an instruction access.
-    input wire [2 : 0] S_AXI_ARPROT,
-    // Read address valid. This signal indicates that the channel
-    // is signaling valid read address and control information.
-    input wire  S_AXI_ARVALID,
-    // Read address ready. This signal indicates that the slave is
-    // ready to accept an address and associated control signals.
-    output wire  S_AXI_ARREADY,
-    // Read data (issued by slave)
-    output wire [C_S_AXI_DATA_WIDTH-1 : 0] S_AXI_RDATA,
-    // Read response. This signal indicates the status of the
-    // read transfer.
-    output wire [1 : 0] S_AXI_RRESP,
-    // Read valid. This signal indicates that the channel is
-    // signaling the required read data.
-    output wire  S_AXI_RVALID,
-    // Read ready. This signal indicates that the master can
-    // accept the read data and response information.
-    input wire  S_AXI_RREADY);
+    //Read Address Channel
+    input                               s_axi_arvalid,
+    input       [AXI_ADDR_WIDTH - 1: 0] s_axi_araddr,
+    output  reg                         s_axi_arready,
 
-    // AXI4LITE signals
-    reg [C_S_AXI_ADDR_WIDTH-1 : 0]  axi_awaddr;
-    reg     axi_awready;
-    reg     axi_wready;
-    reg [1 : 0]     axi_bresp;
-    reg     axi_bvalid;
-    reg [C_S_AXI_ADDR_WIDTH-1 : 0]  axi_araddr;
-    reg     axi_arready;
-    reg [C_S_AXI_DATA_WIDTH-1 : 0]  axi_rdata;
-    reg [1 : 0]     axi_rresp;
-    reg     axi_rvalid;
+    //Read Data Channel
+    input                               s_axi_rready,
+    input       [2:0]                   s_axi_arprot,
+    output  reg                         s_axi_rvalid,
+    output  reg [1:0]                   s_axi_rresp,
+    output  reg [DATA_WIDTH - 1: 0]     s_axi_rdata,
 
-    // Example-specific design signals
-    // local parameter for addressing 32 bit / 64 bit C_S_AXI_DATA_WIDTH
-    // ADDR_LSB is used for addressing 32/64 bit registers/memories
-    // ADDR_LSB = 2 for 32 bits (n downto 2)
-    // ADDR_LSB = 3 for 64 bits (n downto 3)
-    localparam integer ADDR_LSB = (C_S_AXI_DATA_WIDTH/32) + 1;
-    localparam integer OPT_MEM_ADDR_BITS = C_S_AXI_ADDR_WIDTH - ADDR_LSB - 1;
-    //----------------------------------------------
-    //-- Signals for user logic register space example
-    //------------------------------------------------
-    wire        slv_reg_rden;
-    wire        slv_reg_wren;
-    reg         aw_en;
 
-    wire        output_enable;
-    wire [$clog2(NUM_CORES) - 1:0] output_core_id;
-    wire [15:0] output_data_val;
+    //Unit Interface
 
-    wire        axi_we;
-    wire [15:0] axi_addr;
-    wire [15:0] axi_data;
-    wire [15:0] axi_q;
+    //Write Channel
+    input                               unit_wack,
+    input                               unit_invalid_waddr,
+    output  reg                         unit_wen,
+    output  reg [SLV_ADDR_WIDTH - 1: 0] unit_waddr,
+    output  reg [DATA_WIDTH - 1: 0]     unit_wdata,
 
-    // I/O Connections assignments
+    //Read Channel
+    input                               unit_rstrb,
+    input                               unit_invalid_raddr,
+    input       [DATA_WIDTH - 1: 0]     unit_rdata,
+    output  reg                         unit_ren,
+    output  reg [SLV_ADDR_WIDTH - 1: 0] unit_raddr);
 
-    assign S_AXI_AWREADY    = axi_awready;
-    assign S_AXI_WREADY = axi_wready;
-    assign S_AXI_BRESP  = axi_bresp;
-    assign S_AXI_BVALID = axi_bvalid;
-    assign S_AXI_ARREADY    = axi_arready;
-    assign S_AXI_RDATA  = axi_rdata;
-    assign S_AXI_RRESP  = axi_rresp;
-    assign S_AXI_RVALID = axi_rvalid;
-    // Implement axi_awready generation
-    // axi_awready is asserted for one S_AXI_ACLK clock cycle when both
-    // S_AXI_AWVALID and S_AXI_WVALID are asserted. axi_awready is
-    // de-asserted when reset is low.
 
-    always @( posedge S_AXI_ACLK )
-    begin
-      if ( S_AXI_ARESETN == 1'b0 )
-        begin
-          axi_awready <= 1'b0;
-          aw_en <= 1'b1;
-        end 
-      else
-        begin    
-          if (~axi_awready && S_AXI_AWVALID && S_AXI_WVALID && aw_en)
-            begin
-              // slave is ready to accept write address when 
-              // there is a valid write address and write data
-              // on the write address and data bus. This design 
-              // expects no outstanding transactions. 
-              axi_awready <= 1'b1;
-              aw_en <= 1'b0;
-            end
-            else if (S_AXI_BREADY && axi_bvalid)
-                begin
-                  aw_en <= 1'b1;
-                  axi_awready <= 1'b0;
+
+    //local parameters
+    localparam      WRITE_IDLE          = 2'h0;
+    localparam      WRITE_WAIT          = 2'h1;
+    localparam      WRITE_SENT_RESP     = 2'h2;
+
+    localparam      READ_IDLE           = 2'h0;
+    localparam      READ_WAIT           = 2'h1;
+    localparam      READ_SENT_DATA      = 2'h2;
+
+    //registes/wires
+    reg   [1:0]                         state_write;
+    reg   [1:0]                         state_read;
+
+    //submodules
+    //asynchronous logic
+
+
+    //synchronous logic
+
+
+    //Write channel implementation
+    always @(posedge s_axi_aclk) begin
+        if (s_axi_aresetn == 0) begin
+            s_axi_wready            <=  0;
+            s_axi_awready           <=  0;
+            s_axi_bresp             <=  0;
+            s_axi_bvalid            <=  0;
+            unit_wen                <=  0;
+            unit_waddr              <=  0;
+            unit_wdata              <=  0;
+            state_write             <=  WRITE_IDLE;
+        end
+        else begin
+            case (state_write)
+                WRITE_IDLE: begin
+                    if (~s_axi_awready && ~s_axi_wready && s_axi_awvalid && s_axi_wvalid) begin
+                        s_axi_awready       <=  1;
+                        s_axi_wready        <=  1;
+                        unit_wen            <=  1;
+                        unit_wdata          <=  s_axi_wdata;
+                        unit_waddr          <=  s_axi_awaddr[AXI_ADDR_WIDTH - 1: $clog2(STROBE_WIDTH)];
+                        state_write         <=  WRITE_WAIT;
+                    end
+                    else begin
+                        s_axi_awready       <=  0;
+                        s_axi_wready        <=  0;
+                    end
                 end
-          else           
-            begin
-              axi_awready <= 1'b0;
-            end
-        end 
-    end       
+                WRITE_WAIT: begin
+                    s_axi_wready        <=  0;
+                    s_axi_awready       <=  0;
 
-    // Implement axi_awaddr latching
-    // This process is used to latch the address when both 
-    // S_AXI_AWVALID and S_AXI_WVALID are valid. 
-
-    always @( posedge S_AXI_ACLK )
-    begin
-      if ( S_AXI_ARESETN == 1'b0 )
-        begin
-          axi_awaddr <= 0;
-        end 
-      else
-        begin    
-          if (~axi_awready && S_AXI_AWVALID && S_AXI_WVALID && aw_en)
-            begin
-              // Write Address latching 
-              axi_awaddr <= S_AXI_AWADDR;
-            end
-        end 
-    end       
-
-    // Implement axi_wready generation
-    // axi_wready is asserted for one S_AXI_ACLK clock cycle when both
-    // S_AXI_AWVALID and S_AXI_WVALID are asserted. axi_wready is 
-    // de-asserted when reset is low. 
-
-    always @( posedge S_AXI_ACLK )
-    begin
-      if ( S_AXI_ARESETN == 1'b0 )
-        begin
-          axi_wready <= 1'b0;
-        end 
-      else
-        begin    
-          if (~axi_wready && S_AXI_WVALID && S_AXI_AWVALID && aw_en )
-            begin
-              // slave is ready to accept write data when 
-              // there is a valid write address and write data
-              // on the write address and data bus. This design 
-              // expects no outstanding transactions. 
-              axi_wready <= 1'b1;
-            end
-          else
-            begin
-              axi_wready <= 1'b0;
-            end
-        end 
-    end       
-
-    // Implement memory mapped register select and write logic generation
-    // The write data is accepted and written to memory mapped registers when
-    // axi_awready, S_AXI_WVALID, axi_wready and S_AXI_WVALID are asserted. Write strobes are used to
-    // select byte enables of slave registers while writing.
-    // These registers are cleared when reset (active low) is applied.
-    // Slave register write enable is asserted when valid address and data are available
-    // and the slave is ready to accept the write address and write data.
-    assign slv_reg_wren = axi_wready && S_AXI_WVALID && axi_awready && S_AXI_AWVALID;
-    assign axi_we = slv_reg_wren;
-    assign axi_addr = slv_reg_wren ? S_AXI_AWADDR[OPT_MEM_ADDR_BITS+ADDR_LSB:ADDR_LSB] : S_AXI_ARADDR[OPT_MEM_ADDR_BITS+ADDR_LSB:ADDR_LSB];
-    assign axi_data = S_AXI_WDATA[15:0];
-
-    // Implement write response logic generation
-    // The write response and response valid signals are asserted by the slave 
-    // when axi_wready, S_AXI_WVALID, axi_wready and S_AXI_WVALID are asserted.  
-    // This marks the acceptance of address and indicates the status of 
-    // write transaction.
-
-    always @( posedge S_AXI_ACLK )
-    begin
-      if ( S_AXI_ARESETN == 1'b0 )
-        begin
-          axi_bvalid  <= 0;
-          axi_bresp   <= 2'b0;
-        end 
-      else
-        begin    
-          if (axi_awready && S_AXI_AWVALID && ~axi_bvalid && axi_wready && S_AXI_WVALID)
-            begin
-              // indicates a valid write response is available
-              axi_bvalid <= 1'b1;
-              axi_bresp  <= 2'b0; // 'OKAY' response 
-            end                   // work error responses in future
-          else
-            begin
-              if (S_AXI_BREADY && axi_bvalid) 
-                //check if bready is asserted while bvalid is high) 
-                //(there is a possibility that bready is always asserted high)   
-                begin
-                  axi_bvalid <= 1'b0; 
-                end  
-            end
-        end
-    end   
-
-    // Implement axi_arready generation
-    // axi_arready is asserted for one S_AXI_ACLK clock cycle when
-    // S_AXI_ARVALID is asserted. axi_awready is 
-    // de-asserted when reset (active low) is asserted. 
-    // The read address is also latched when S_AXI_ARVALID is 
-    // asserted. axi_araddr is reset to zero on reset assertion.
-
-    always @( posedge S_AXI_ACLK )
-    begin
-      if ( S_AXI_ARESETN == 1'b0 )
-        begin
-          axi_arready <= 1'b0;
-          axi_araddr  <= 32'b0;
-        end 
-      else
-        begin    
-          if (~axi_arready && S_AXI_ARVALID)
-            begin
-              // indicates that the slave has acceped the valid read address
-              axi_arready <= 1'b1;
-              // Read address latching
-              axi_araddr  <= S_AXI_ARADDR;
-            end
-          else
-            begin
-              axi_arready <= 1'b0;
-            end
-        end 
-    end       
-
-    // Implement axi_arvalid generation
-    // axi_rvalid is asserted for one S_AXI_ACLK clock cycle when both 
-    // S_AXI_ARVALID and axi_arready are asserted. The slave registers 
-    // data are available on the axi_rdata bus at this instance. The 
-    // assertion of axi_rvalid marks the validity of read data on the 
-    // bus and axi_rresp indicates the status of read transaction.axi_rvalid 
-    // is deasserted on reset (active low). axi_rresp and axi_rdata are 
-    // cleared to zero on reset (active low).  
-    always @( posedge S_AXI_ACLK )
-    begin
-      if ( S_AXI_ARESETN == 1'b0 )
-        begin
-          axi_rvalid <= 0;
-          axi_rresp  <= 0;
-        end 
-      else
-        begin    
-          if (axi_arready && S_AXI_ARVALID && ~axi_rvalid)
-            begin
-              // Valid read data is available at the read data bus
-              axi_rvalid <= 1'b1;
-              axi_rresp  <= 2'b0; // 'OKAY' response
-            end   
-          else if (axi_rvalid && S_AXI_RREADY)
-            begin
-              // Read data is accepted by the master
-              axi_rvalid <= 1'b0;
-            end                
-        end
-    end    
-
-    // Implement memory mapped register select and read logic generation
-    // Slave register read enable is asserted when valid address is available
-    // and the slave is ready to accept the read address.
-    assign slv_reg_rden = axi_arready & S_AXI_ARVALID & ~axi_rvalid;
-
-    // Output register or memory read data
-    always @( posedge S_AXI_ACLK )
-    begin
-      if ( S_AXI_ARESETN == 1'b0 )
-        begin
-          axi_rdata  <= 0;
-        end 
-      else
-        begin    
-          // When there is a valid read address (S_AXI_ARVALID) with 
-          // acceptance of read address by the slave (axi_arready), 
-          // output the read dada 
-          if (slv_reg_rden)
-            begin
-              axi_rdata <= {16'h0, axi_q};     // register read data
-            end   
+                    if (unit_wack && ~s_axi_bvalid) begin
+                        s_axi_bvalid        <=  1;
+                        unit_wen            <=  0;
+                        state_write         <=  WRITE_SENT_RESP;
+                        
+                        if (unit_invalid_waddr) begin
+                            s_axi_bresp         <=  `AXI_RESP_DECERR;
+                        end
+                        else begin
+                            s_axi_bresp         <=  `AXI_RESP_OKAY;
+                        end
+                    end
+                end
+                WRITE_SENT_RESP: begin
+                    if (s_axi_bready && s_axi_bvalid) begin
+                        s_axi_bvalid        <=  0;
+                        state_write         <=  WRITE_IDLE;
+                    end
+                end
+                default: begin
+                    $display("AXI Lite Slave: Shouldn't have gotten here!");
+                end
+            endcase
         end
     end
 
-    // Add user logic here
-    pasc #(.NUM_CORES(NUM_CORES)) pasc(
-       .clk(S_AXI_ACLK),
-       .output_enable(output_enable),
-       .output_core_id(output_core_id),
-       .output_data_val(output_data_val),
 
-       .axi_we(axi_we),
-       .axi_addr(axi_addr),
-       .axi_data(axi_data),
-       .axi_q(axi_q));
-    // User logic ends
+    //Read channel implementation
+    always @(posedge s_axi_aclk) begin
+        if (s_axi_aresetn == 0) begin
+            s_axi_arready           <=  0;
+            s_axi_rvalid            <=  0;
+            s_axi_rdata             <=  0;
+            s_axi_rresp             <=  0;
+            unit_ren                <=  0;
+            unit_raddr              <=  0;
+            state_read              <=  READ_IDLE;
+        end
+        else begin
+            case (state_read)
+                READ_IDLE: begin
+                    if (~s_axi_arready && s_axi_arvalid) begin
+                        s_axi_arready       <=  1;
+                        unit_ren            <=  1;
+                        unit_raddr          <=  s_axi_araddr[AXI_ADDR_WIDTH - 1: $clog2(STROBE_WIDTH)];
+                        state_read          <=  READ_WAIT;
+                    end
+                end
+                READ_WAIT: begin
+                    s_axi_arready       <=  0;
 
-    endmodule
+                    if (unit_rstrb && ~s_axi_rvalid) begin
+                        s_axi_rvalid        <=  1;
+                        s_axi_rdata         <=  unit_rdata;
+                        unit_ren            <=  0;
+                        state_read          <=  READ_SENT_DATA;
+
+                        if (unit_invalid_raddr) begin
+                            s_axi_rresp         <=  `AXI_RESP_DECERR;
+                        end
+                        else begin
+                            s_axi_rresp         <=  `AXI_RESP_OKAY;
+                        end
+                    end
+                end
+                READ_SENT_DATA: begin
+                    if (s_axi_rready && s_axi_rvalid) begin
+                        s_axi_rvalid        <=  0;
+                        state_read          <=  READ_IDLE;
+                    end
+                end
+                default: begin
+                    $display("AXI Lite Slave: Shouldn't have gotten here!");
+                end
+            endcase
+        end
+    end
+endmodule

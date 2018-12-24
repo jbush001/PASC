@@ -1,5 +1,5 @@
 // 
-// Copyright 2013 Jeff Bush
+// Copyright 2018 Mohammad Amin Nili
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,80 +15,147 @@
 // 
 
 module axi_interface
-    #(// Users to add parameters here
-    parameter integer NUM_CORES = 16,
-    parameter integer MEMORY_MAP_SIZE = 64 * 1024, //64K
-    // User parameters ends
-    // Do not modify the parameters beyond this line
+    #(parameter NUM_CORES               = 16,
+    parameter   DATA_WIDTH              = 32,
+    parameter   MEMORY_MAP_SIZE         = 64 * 1024,
+    parameter   STROBE_WIDTH            = (DATA_WIDTH / 8),
+    parameter   AXI_ADDR_WIDTH          = $clog2(MEMORY_MAP_SIZE * 4),
+    parameter   SLV_ADDR_WIDTH          = AXI_ADDR_WIDTH - $clog2(STROBE_WIDTH))
+
+    (input                              s_axi_aclk,
+    input                               s_axi_aresetn,
+
+    //Write Address Channel
+    input                               s_axi_awvalid,
+    input       [AXI_ADDR_WIDTH - 1: 0] s_axi_awaddr,
+    output                              s_axi_awready,
+
+    //Write Data Channel
+    input                               s_axi_wvalid,
+    input       [2:0]                   s_axi_awprot,
+    input       [STROBE_WIDTH - 1: 0]   s_axi_wstrb,
+    input       [DATA_WIDTH - 1: 0]     s_axi_wdata,
+    output                              s_axi_wready,
+
+    //Write Response Channel
+    input                               s_axi_bready,
+    output                              s_axi_bvalid,
+    output      [1:0]                   s_axi_bresp,
+
+    //Read Address Channel
+    input                               s_axi_arvalid,
+    input       [AXI_ADDR_WIDTH - 1: 0] s_axi_araddr,
+    output                              s_axi_arready,
+
+    //Read Data Channel
+    input                               s_axi_rready,
+    input       [2:0]                   s_axi_arprot,
+    output                              s_axi_rvalid,
+    output      [1:0]                   s_axi_rresp,
+    output      [DATA_WIDTH - 1: 0]     s_axi_rdata);
+
+    reg                                 unit_wack;
+    wire                                unit_invalid_waddr;
+    wire                                unit_wen;
+    wire        [SLV_ADDR_WIDTH - 1: 0] unit_waddr;
+    wire        [DATA_WIDTH - 1: 0]     unit_wdata;
+
+    reg                                 unit_rstrb;
+    wire                                unit_invalid_raddr;
+    wire                                unit_ren;
+    wire       [SLV_ADDR_WIDTH - 1: 0]  unit_raddr;
+
+    wire       [15 : 0]                 axi_q;
+    wire       [SLV_ADDR_WIDTH - 1: 0]  axi_addr;
+    wire                                output_enable;
+    wire [$clog2(NUM_CORES) - 1:0]      output_core_id;
+    wire        [15:0]                  output_data_val;
+
+    axi_slave axi_slave_inst (
+        .s_axi_aclk(s_axi_aclk),
+        .s_axi_aresetn(s_axi_aresetn),
+
+        //Write Address Channel
+        .s_axi_awvalid(s_axi_awvalid),
+        .s_axi_awaddr(s_axi_awaddr),
+        .s_axi_awready(s_axi_awready),
+
+        //Write Data Channel
+        .s_axi_wvalid(s_axi_wvalid),
+        .s_axi_awprot(s_axi_awprot),
+        .s_axi_wstrb(s_axi_wstrb),
+        .s_axi_wdata(s_axi_wdata),
+        .s_axi_wready(s_axi_wready),
+
+        //Write Response Channel
+        .s_axi_bready(s_axi_bready),
+        .s_axi_bvalid(s_axi_bvalid),
+        .s_axi_bresp(s_axi_bresp),
+
+        //Read Address Channel
+        .s_axi_arvalid(s_axi_arvalid),
+        .s_axi_araddr(s_axi_araddr),
+        .s_axi_arready(s_axi_arready),
+
+        //Read Data Channel
+        .s_axi_rready(s_axi_rready),
+        .s_axi_arprot(s_axi_arprot),
+        .s_axi_rvalid(s_axi_rvalid),
+        .s_axi_rresp(s_axi_rresp),
+        .s_axi_rdata(s_axi_rdata),
 
 
-    // Width of S_AXI data bus
-    parameter integer C_S_AXI_DATA_WIDTH  = 32,
-    // Width of S_AXI address bus
-    //Needs 18 bits for MEMORY_MAP addressing
-    parameter integer C_S_AXI_ADDR_WIDTH  = $clog2(MEMORY_MAP_SIZE * 4))
+        //Unit Interface
 
-    (// Users to add ports here
+        //Write Channel
+        .unit_wack(unit_wack),
+        .unit_invalid_waddr(unit_invalid_waddr),
+        .unit_wen(unit_wen),
+        .unit_waddr(unit_waddr),
+        .unit_wdata(unit_wdata),
 
-    // User ports ends
-    // Do not modify the ports beyond this line
+        //Read Channel
+        .unit_rstrb(unit_rstrb),
+        .unit_invalid_raddr(unit_invalid_raddr),
+        .unit_rdata({16'h0, axi_q}),
+        .unit_ren(unit_ren),
+        .unit_raddr(unit_raddr));
 
+    assign axi_addr = unit_wen ? unit_waddr : unit_raddr;
 
-    // Ports of Axi Slave Bus Interface S_AXI
-    input wire  s_axi_aclk,
-    input wire  s_axi_aresetn,
-    input wire [C_S_AXI_ADDR_WIDTH-1 : 0] s_axi_awaddr,
-    input wire [2 : 0] s_axi_awprot,
-    input wire  s_axi_awvalid,
-    output wire  s_axi_awready,
-    input wire [C_S_AXI_DATA_WIDTH-1 : 0] s_axi_wdata,
-    input wire [(C_S_AXI_DATA_WIDTH/8)-1 : 0] s_axi_wstrb,
-    input wire  s_axi_wvalid,
-    output wire  s_axi_wready,
-    output wire [1 : 0] s_axi_bresp,
-    output wire  s_axi_bvalid,
-    input wire  s_axi_bready,
-    input wire [C_S_AXI_ADDR_WIDTH-1 : 0] s_axi_araddr,
-    input wire [2 : 0] s_axi_arprot,
-    input wire  s_axi_arvalid,
-    output wire  s_axi_arready,
-    output wire [C_S_AXI_DATA_WIDTH-1 : 0] s_axi_rdata,
-    output wire [1 : 0] s_axi_rresp,
-    output wire  s_axi_rvalid,
-    input wire  s_axi_rready);
-    
-    // Instantiation of Axi Bus Interface S_AXI
-    axi_slave # ( 
-        .NUM_CORES(NUM_CORES),
-        .MEMORY_MAP_SIZE(MEMORY_MAP_SIZE),
-        .C_S_AXI_DATA_WIDTH(C_S_AXI_DATA_WIDTH),
-        .C_S_AXI_ADDR_WIDTH(C_S_AXI_ADDR_WIDTH)
-    ) axi_slave_inst (
-        .S_AXI_ACLK(s_axi_aclk),
-        .S_AXI_ARESETN(s_axi_aresetn),
-        .S_AXI_AWADDR(s_axi_awaddr),
-        .S_AXI_AWPROT(s_axi_awprot),
-        .S_AXI_AWVALID(s_axi_awvalid),
-        .S_AXI_AWREADY(s_axi_awready),
-        .S_AXI_WDATA(s_axi_wdata),
-        .S_AXI_WSTRB(s_axi_wstrb),
-        .S_AXI_WVALID(s_axi_wvalid),
-        .S_AXI_WREADY(s_axi_wready),
-        .S_AXI_BRESP(s_axi_bresp),
-        .S_AXI_BVALID(s_axi_bvalid),
-        .S_AXI_BREADY(s_axi_bready),
-        .S_AXI_ARADDR(s_axi_araddr),
-        .S_AXI_ARPROT(s_axi_arprot),
-        .S_AXI_ARVALID(s_axi_arvalid),
-        .S_AXI_ARREADY(s_axi_arready),
-        .S_AXI_RDATA(s_axi_rdata),
-        .S_AXI_RRESP(s_axi_rresp),
-        .S_AXI_RVALID(s_axi_rvalid),
-        .S_AXI_RREADY(s_axi_rready)
-    );
+    assign unit_invalid_waddr = unit_waddr < (16'h4000) || (16'hFC00) <= unit_waddr;
+    assign unit_invalid_raddr = unit_raddr < (16'h4000) || (16'hFC00) <= unit_raddr;
 
-    // Add user logic here
+    always @(posedge s_axi_aclk) begin
+        if (s_axi_aresetn == 0) begin
+            unit_wack   <=  0;
+            unit_rstrb  <=  0;
+        end
+        else begin
+            if (~unit_wack && unit_wen) begin
+                unit_wack   <=  1;
+            end
+            else begin
+                unit_wack   <=  0;
+            end
 
-    // User logic ends
+            if (~unit_rstrb && unit_ren) begin
+                unit_rstrb   <=  1;
+            end
+            else begin
+                unit_rstrb   <=  0;
+            end
+        end
+    end
 
-    endmodule
+    pasc #(.NUM_CORES(NUM_CORES)) pasc(
+       .clk(s_axi_aclk),
+       .output_enable(output_enable),
+       .output_core_id(output_core_id),
+       .output_data_val(output_data_val),
+
+       .axi_we(unit_wen),
+       .axi_addr(axi_addr),
+       .axi_data(unit_wdata[15:0]),
+       .axi_q(axi_q));
+endmodule

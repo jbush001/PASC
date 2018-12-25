@@ -71,7 +71,13 @@ module axi_interface
     wire [$clog2(NUM_CORES) - 1:0]      output_core_id;
     wire        [15:0]                  output_data_val;
 
-    axi_slave axi_slave_inst (
+    axi_slave #(
+        .DATA_WIDTH(DATA_WIDTH),
+        .MEMORY_MAP_SIZE(MEMORY_MAP_SIZE),
+        .STROBE_WIDTH(STROBE_WIDTH),
+        .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+        .SLV_ADDR_WIDTH(SLV_ADDR_WIDTH)
+    ) axi_slave_inst (
         .s_axi_aclk(s_axi_aclk),
         .s_axi_aresetn(s_axi_aresetn),
 

@@ -26,15 +26,21 @@ module cluster
 
     (input          clk,
     input           reset,
-    input[15:0]     device_data_in,
+    input  [15:0]   device_data_in,
     output          device_write_en,
     output          device_read_en,
-    output[9:0]     device_addr,
-    output[15:0]    device_data_out,
-    output reg [$clog2(NUM_CORES) - 1:0] device_core_id);
+    output [9:0]    device_addr,
+    output [15:0]   device_data_out,
+    output reg [$clog2(NUM_CORES) - 1:0] device_core_id,
+
+    input           axi_we,
+    input  [15:0]   axi_addr,
+    input  [15:0]   axi_data,
+    output [15:0]   axi_q);
     
     localparam LOCAL_MEMORY_SIZE = 512;
     localparam GLOBAL_MEMORY_SIZE = 1024;
+    localparam GMEM_ADDR_WIDTH = $clog2(GLOBAL_MEMORY_SIZE);
     
     wire[15:0] memory_addr;
     wire[15:0] core_memory_addr [0:NUM_CORES-1];
@@ -87,8 +93,6 @@ module cluster
     assign device_read_en = device_memory_select && memory_rden;
     assign device_data_out = memory_write_val;
 
-    localparam GMEM_ADDR_WIDTH = $clog2(GLOBAL_MEMORY_SIZE);
-
     // Convert one-hot to binary
     integer oh_index;
     always @*
@@ -104,7 +108,7 @@ module cluster
         end
     end
 
-    spsram 
+    dpsram 
 `ifdef FEATURE_FPGA
     #(GLOBAL_MEMORY_SIZE, 16, GMEM_ADDR_WIDTH, 1, `PROGRAM_PATH) 
 `else
@@ -112,10 +116,16 @@ module cluster
 `endif
     global_memory(
         .clk(clk),
+        //Port A
         .addr_a(memory_addr[GMEM_ADDR_WIDTH - 1:0]),
         .q_a(global_mem_q),
         .we_a(global_mem_write),
-        .data_a(memory_write_val));
+        .data_a(memory_write_val),
+        //Port B
+        .addr_b(axi_addr[GMEM_ADDR_WIDTH - 1:0]),
+        .q_b(axi_q),
+        .we_b(axi_we),
+        .data_b(axi_data));
 
     always @(posedge reset, posedge clk)
     begin

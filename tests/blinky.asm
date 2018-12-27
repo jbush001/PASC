@@ -14,65 +14,65 @@
 # limitations under the License.
 # 
 
-					res __end	# Length for bootloader
-					org 16
+                    res __end   # Length for bootloader
+                    org 16
 
-					xor r3, r3, r3
-					ldi r0, 4096
-					store r3, (r0)
-
-
-mainloop:			ldi r0, -2		# semaphore address
-					ldi r1, 1		# store value
-spinlock:			store r1, (r0)	# acquire semaphore
-					load r3, (r0)	# did we grab it?
-					nop
-					nop
-					and r3, r3, r3
-					bzs spinlock	# no, so wait
-					nop
-					nop
-					
-					# Update global value
-					ldi r2, 4096	# global address
-					load r3, (r2)	# load value
-					nop
-					nop
-					addi r3, r3, 1	# increment
-					store r3, (r2)	# update
-
-					# Display it
-					ldi r0, -1		# load output address
-					store r3, (r0)	# write out value
+                    xor r3, r3, r3
+                    ldi r0, 4096
+                    store r3, (r0)
 
 
-					# wait for a spell
-					xor r7, r7, r7
-wait0:				nop
-					nop
-					nop
-					nop
-					nop
-					nop
-					nop
-					nop
-					addi r7, r7, 1
-					bzc wait0
-					nop
-					nop
+mainloop:           ldi r0, -2      # semaphore address
+                    ldi r1, 1       # store value
+spinlock:           store r1, (r0)  # acquire semaphore
+                    load r3, (r0)   # did we grab it?
+                    nop
+                    nop
+                    and r3, r3, r3
+                    bzs spinlock    # no, so wait
+                    nop
+                    nop
+                    
+                    # Update global value
+                    ldi r2, 4096    # global address
+                    load r3, (r2)   # load value
+                    nop
+                    nop
+                    addi r3, r3, 1  # increment
+                    store r3, (r2)  # update
 
-					ldi r0, -2		# semaphore address
-					xor r1, r1, r1	# clear
-					store r1, (r0)	# Reset seamaphore
-					
-					jump mainloop	
-					nop
-					nop
-					
-					
-					
-					
-					
-					
-					
-					
+                    # Display it
+                    ldi r0, -1      # load output address
+                    store r3, (r0)  # write out value
+
+
+                    # wait for a spell
+                    xor r7, r7, r7
+wait0:              nop
+                    nop
+                    nop
+                    nop
+                    nop
+                    nop
+                    nop
+                    nop
+                    addi r7, r7, 1
+                    bzc wait0
+                    nop
+                    nop
+
+                    ldi r0, -2      # semaphore address
+                    xor r1, r1, r1  # clear
+                    store r1, (r0)  # Reset seamaphore
+                    
+                    jump mainloop   
+                    nop
+                    nop
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    

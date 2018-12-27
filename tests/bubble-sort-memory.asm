@@ -61,11 +61,12 @@ noswap:         addi r1, r1, -1
 output_result:  lea r0, data_array
                 load r1, (r0)
                 addi r0, r0, 1
-                ldi r3, -1          # Output port address
+                ldi r3, 16640       # Output memory address
 char_loop:      load r2, (r0)   
                 addi r0, r0, 1
                 nop
                 store r2, (r3)
+		addi r3, r3, 1
                 addi r1, r1, -1
                 bzc char_loop
                 nop
@@ -77,4 +78,4 @@ done:           jump done
 
 
 # First element is total element count
-data_array:     res 10, 1, 4, 2, 8, 6, 5, 10, 3, 7, 9  
+data_array:     res 16, 15, 0, 1, 4, 2, 12, 8, 13, 14, 6, 5, 11, 10, 3, 7, 9  

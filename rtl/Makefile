@@ -14,18 +14,39 @@
 # limitations under the License.
 # 
 
-SOURCES=core/dpsram.v \
-	core/pipeline.v	\
+RTL_SOURCES=core/dpsram.v \
+	core/pipeline.v \
 	core/core.v \
 	core/cluster.v \
 	core/spsram.v \
-	core/top.v \
+	core/pasc.v \
 	core/arbiter.v \
-	testbench/multi_tb.v 
+	testbench/multi_tb.v
 
-multi-sim.vvp: $(SOURCES) core/coreboot.hex
-	iverilog -I core/ -o $@ $(SOURCES)
+ASSEMBLE=../tools/assemble.py
+
+COREBOOT=../os/coreboot
+COREBOOT_ASM=$(COREBOOT).asm
+COREBOOT_HEX=$(COREBOOT).hex
+
+SAMPLE_PROGRAM=../tests/bubble-sort
+SAMPLE_PROGRAM_ASM=$(SAMPLE_PROGRAM).asm
+SAMPLE_PROGRAM_HEX=$(SAMPLE_PROGRAM).hex
+
+all: multi-sim.vvp
+
+multi-sim.vvp: $(RTL_SOURCES) sample_program coreboot
+	mkdir simulation
+	iverilog -I core/ -o simulation/multi-sim.vvp $(RTL_SOURCES)
+	vvp simulation/multi-sim.vvp +bin=$(SAMPLE_PROGRAM_HEX) -lxt2
+	mv trace.lxt simulation
 	
-core/coreboot.hex: core/coreboot.asm
-	../tools/assemble.py core/coreboot.hex core/coreboot.asm
+coreboot: $(COREBOOT_ASM)
+	$(ASSEMBLE) $(COREBOOT_HEX) $(COREBOOT_ASM)
+
+sample_program: $(SAMPLE_PROGRAM_ASM)
+	$(ASSEMBLE) $(SAMPLE_PROGRAM_HEX) $(SAMPLE_PROGRAM_ASM)
+
+clean:
+	rm -rf simulation 
 
